@@ -111,3 +111,54 @@ export function WeatherCard({ day, compact = false }: { day: Day; compact?: bool
     </section>
   )
 }
+
+export function WeatherBadge({ day }: { day: Day }) {
+  const [weather, setWeather] = useState<Weather | null>(null)
+
+  useEffect(() => {
+    if (day.lat == null || day.lng == null) return
+    const cacheKey = `weather_${day.date}_${day.lat}_${day.lng}`
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) ?? '')
+      if (Date.now() - cached.savedAt < 60 * 60 * 1000 && cached.weather) {
+        setWeather(cached.weather)
+        return
+      }
+    } catch { /* the full card will refresh it when opened */ }
+
+    const params = new URLSearchParams({
+      latitude: String(day.lat),
+      longitude: String(day.lng),
+      daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max',
+      timezone: 'Europe/London',
+      forecast_days: '16',
+    })
+    fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const index = data.daily?.time?.indexOf(day.date) ?? -1
+        if (index < 0) return
+        const next: Weather = {
+          code: data.daily.weather_code[index],
+          min: Math.round(data.daily.temperature_2m_min[index]),
+          max: Math.round(data.daily.temperature_2m_max[index]),
+          rainProbability: Math.round(data.daily.precipitation_probability_max[index] ?? 0),
+          rain: Number(data.daily.precipitation_sum[index] ?? 0),
+          wind: Math.round(data.daily.wind_speed_10m_max[index] ?? 0),
+        }
+        setWeather(next)
+        localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), weather: next }))
+      })
+      .catch(() => setWeather(null))
+  }, [day.date, day.lat, day.lng])
+
+  if (!weather) return null
+  const condition = weatherLabel(weather.code)
+
+  return (
+    <span className="flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800">
+      <span aria-hidden="true">{condition.icon}</span>
+      {weather.min}–{weather.max}°
+    </span>
+  )
+}

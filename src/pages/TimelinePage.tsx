@@ -4,6 +4,7 @@ import { useSession } from '../hooks/useSession'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS } from '../lib/types'
 import type { Day } from '../lib/types'
 import { BedDouble, CalendarDays, ChevronRight, Clock3, LogOut, MapPin } from 'lucide-react'
+import { WeatherBadge } from '../components/WeatherCard'
 
 const DAY_MS = 86_400_000
 
@@ -80,7 +81,8 @@ function DayRow({ day }: { day: Day }) {
                 {day.base_city}
               </h2>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <WeatherBadge day={day} />
               {isToday && (
                 <span className="rounded-full bg-highland-700 px-2 py-1 text-[10px] font-bold uppercase text-white">
                   Avui
