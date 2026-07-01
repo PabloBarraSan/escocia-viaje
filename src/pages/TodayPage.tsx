@@ -12,7 +12,7 @@ function todayKey() {
 }
 
 function directions(destination: string) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${destination}, Scotland`)}&travelmode=driving`
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`
 }
 
 export function TodayPage() {
@@ -26,6 +26,7 @@ export function TodayPage() {
 
   const selected = suggestions.filter((item) => item.day_id === day.id && item.status === 'selected')
   const practical = tripInfo.filter((item) => ['vols', 'matricula_cotxe', 'telefon_emergencia', 'asseguranca'].includes(item.key) && item.value)
+  const lodgingRoute = day.lodging_address ? directions(day.lodging_address) : null
 
   return (
     <main className="safe-top space-y-5 p-4">
@@ -38,7 +39,7 @@ export function TodayPage() {
       </header>
 
       <div className="grid grid-cols-2 gap-3">
-        <a href={directions(day.base_city)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
+        <a href={directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
           <Navigation size={19} /> Com arribar
         </a>
         <Link to={`/dia/${day.day_number}`} className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm">
@@ -50,6 +51,13 @@ export function TodayPage() {
         <section className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500"><BedDouble size={16} /> Aquesta nit</h2>
           <p className="mt-2 font-semibold text-highland-900">{day.lodging}</p>
+          {day.lodging_name && <p className="mt-1 text-sm font-semibold text-highland-700">{day.lodging_name}</p>}
+          {day.lodging_address && <p className="mt-1 text-sm text-gray-500">{day.lodging_address}</p>}
+          {lodgingRoute && (
+            <a href={lodgingRoute} target="_blank" rel="noreferrer" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-highland-700 px-3 py-2 text-sm font-semibold text-white">
+              <Navigation size={16} /> Anar a l’allotjament
+            </a>
+          )}
         </section>
       )}
 

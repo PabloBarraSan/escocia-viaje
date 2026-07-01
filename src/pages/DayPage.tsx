@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft, ChevronRight, Bed } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Bed, MapPinned, Phone } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { ActivityList } from '../components/ActivityList'
@@ -34,6 +34,10 @@ export function DayPage() {
     await updateDay(day.id, { lodging }, session!.name)
     setEditingLodging(false)
   }
+
+  const lodgingDirections = day.lodging_address
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.lodging_address)}&travelmode=driving`
+    : null
 
   return (
     <div className="safe-top">
@@ -88,6 +92,22 @@ export function DayPage() {
               </button>
             )}
           </div>
+          {day.lodging_name && <p className="mt-3 text-sm font-semibold text-highland-800">{day.lodging_name}</p>}
+          {day.lodging_address && <p className="mt-1 text-sm text-gray-500">{day.lodging_address}</p>}
+          {(lodgingDirections || day.lodging_phone) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {lodgingDirections && (
+                <a href={lodgingDirections} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl bg-highland-700 px-3 py-2 text-sm font-semibold text-white">
+                  <MapPinned size={16} /> Anar a l’allotjament
+                </a>
+              )}
+              {day.lodging_phone && (
+                <a href={`tel:${day.lodging_phone.replace(/\s/g, '')}`} className="flex items-center gap-2 rounded-xl bg-highland-100 px-3 py-2 text-sm font-semibold text-highland-800">
+                  <Phone size={16} /> Telefonar
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         <ActivityList dayId={day.id} activities={day.activities ?? []} />

@@ -16,6 +16,9 @@ export interface Day {
   base_city: string
   type: 'city' | 'road' | 'nature'
   lodging: string | null
+  lodging_name?: string | null
+  lodging_address?: string | null
+  lodging_phone?: string | null
   lat: number | null
   lng: number | null
   sort_order: number
