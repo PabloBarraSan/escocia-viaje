@@ -3,6 +3,7 @@ import { useSession } from './hooks/useSession'
 import { LoginPage } from './pages/LoginPage'
 import { TimelinePage } from './pages/TimelinePage'
 import { DayPage } from './pages/DayPage'
+import { DayHorariPage } from './pages/DayHorariPage'
 import { MapPage } from './pages/MapPage'
 import { SummaryPage } from './pages/SummaryPage'
 import { ReservationsPage } from './pages/ReservationsPage'
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/" element={<TodayPage />} />
           <Route path="/dies" element={<TimelinePage />} />
           <Route path="/dia/:dayNum" element={<DayPage />} />
+          <Route path="/dia/:dayNum/horari" element={<DayHorariPage />} />
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/resum" element={<SummaryPage />} />
           <Route path="/reservas" element={<ReservationsPage />} />

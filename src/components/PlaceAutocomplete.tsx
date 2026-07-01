@@ -11,7 +11,7 @@ type Props = {
   value: string
   mapsUrl: string
   location: { lat: number; lng: number }
-  onChange: (title: string, mapsUrl: string) => void
+  onChange: (title: string, mapsUrl: string, address?: string) => void
   placeholder?: string
 }
 
@@ -76,11 +76,11 @@ export function PlaceAutocomplete({
     const details = await fetchPlaceDetails(option.placeId)
     setLoading(false)
     if (details) {
-      onChange(details.title, details.mapsUrl)
+      onChange(details.title, details.mapsUrl, details.address)
       setQuery(details.title)
       return
     }
-    onChange(option.label, mapsSearchUrl(option.label, option.secondary))
+    onChange(option.label, mapsSearchUrl(option.label, option.secondary), option.secondary)
     setQuery(option.label)
   }
 

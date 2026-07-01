@@ -1,3 +1,6 @@
+import type { Day } from './types'
+import { LODGINGS_BY_DAY } from './types'
+
 const API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY as string | undefined
 
 export const isGooglePlacesConfigured = Boolean(API_KEY?.trim())
@@ -26,10 +29,67 @@ type PlaceDetails = {
   googleMapsUri?: string
 }
 
+type NearbyPlaceRaw = {
+  id?: string
+  displayName?: { text?: string }
+  formattedAddress?: string
+  googleMapsUri?: string
+  rating?: number
+  userRatingCount?: number
+  location?: { latitude?: number; longitude?: number }
+}
+
+type NearbySearchResponse = {
+  places?: NearbyPlaceRaw[]
+}
+
 export type PlaceOption = {
   placeId: string
   label: string
   secondary: string
+}
+
+export type NearbyPlaceKind = 'pub' | 'restaurant' | 'sight'
+
+export type NearbyPlace = {
+  placeId: string
+  title: string
+  address: string
+  mapsUrl: string
+  rating: number | null
+  reviewCount: number | null
+  distanceKm: number | null
+}
+
+const NEARBY_TYPES: Record<NearbyPlaceKind, string[]> = {
+  pub: ['pub', 'bar'],
+  restaurant: ['restaurant', 'meal_takeaway'],
+  sight: ['tourist_attraction', 'museum', 'park'],
+}
+
+const NEARBY_LABELS: Record<NearbyPlaceKind, string> = {
+  pub: 'Pubs',
+  restaurant: 'Restaurants',
+  sight: 'Llocs guapos',
+}
+
+export function haversineKm(from: LatLng, to: LatLng) {
+  const R = 6371
+  const dLat = ((to.lat - from.lat) * Math.PI) / 180
+  const dLng = ((to.lng - from.lng) * Math.PI) / 180
+  const lat1 = (from.lat * Math.PI) / 180
+  const lat2 = (to.lat * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export function formatDistanceKm(km: number | null) {
+  if (km == null) return null
+  if (km < 1) return `${(Math.round(km * 10) / 10).toFixed(1)} km`
+  if (km < 10) return `${km.toFixed(1)} km`
+  return `${Math.round(km)} km`
 }
 
 function placeIdFromResource(resource?: string, fallback?: string) {
@@ -79,26 +139,37 @@ export async function searchPlaces(
     .filter((item): item is PlaceOption => Boolean(item?.placeId && item.label))
 }
 
-export async function fetchPlaceDetails(placeId: string): Promise<{ title: string; mapsUrl: string } | null> {
+export async function fetchPlaceDetails(
+  placeId: string,
+): Promise<{ title: string; address: string; mapsUrl: string; lat: number | null; lng: number | null } | null> {
   if (!isGooglePlacesConfigured) return null
 
   const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
     headers: {
       'X-Goog-Api-Key': API_KEY!,
-      'X-Goog-FieldMask': 'displayName,formattedAddress,googleMapsUri',
+      'X-Goog-FieldMask': 'displayName,formattedAddress,googleMapsUri,location',
     },
   })
 
   if (!response.ok) return null
 
-  const data = (await response.json()) as PlaceDetails
+  const data = (await response.json()) as PlaceDetails & { location?: { latitude?: number; longitude?: number } }
   const title = data.displayName?.text?.trim()
   if (!title) return null
 
   const mapsUrl = data.googleMapsUri
     ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title}, ${data.formattedAddress ?? ''}`)}`
 
-  return { title, mapsUrl }
+  const lat = data.location?.latitude
+  const lng = data.location?.longitude
+
+  return {
+    title,
+    address: data.formattedAddress?.trim() ?? '',
+    mapsUrl,
+    lat: lat ?? null,
+    lng: lng ?? null,
+  }
 }
 
 export function daySearchLocation(day: { lat: number | null; lng: number | null; base_city: string }) {
@@ -112,4 +183,87 @@ export function daySearchLocation(day: { lat: number | null; lng: number | null;
   if (city.includes('fort william')) return { lat: 56.8198, lng: -5.1052 }
   if (city.includes('glasgow')) return { lat: 55.8642, lng: -4.2518 }
   return { lat: 56.5, lng: -4.5 }
+}
+
+/** Punt de cerca: allotjament del dia si el tenim, sinó la ciutat base. */
+export function lodgingSearchLocation(day: Day) {
+  const lodging = LODGINGS_BY_DAY[day.day_number]
+  if (lodging) return { lat: lodging.lat, lng: lodging.lng }
+  return daySearchLocation(day)
+}
+
+export function suggestNearbyKind(activityText: string): NearbyPlaceKind | null {
+  const t = activityText.toLowerCase()
+  if (/pub|sopar|cerve|whisky|bar\b/.test(t)) return 'pub'
+  if (/dinar|esmorzar|menjar|restaurant|sopar/.test(t)) return 'restaurant'
+  if (/visitar|castell|museu|caminata|lloc|passeig|veure|mirador/.test(t)) return 'sight'
+  return null
+}
+
+export function nearbyKindLabel(kind: NearbyPlaceKind) {
+  return NEARBY_LABELS[kind]
+}
+
+export async function searchNearbyPlaces(
+  location: LatLng,
+  kind: NearbyPlaceKind,
+  signal?: AbortSignal,
+): Promise<NearbyPlace[]> {
+  if (!isGooglePlacesConfigured) return []
+
+  const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    method: 'POST',
+    signal,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': API_KEY!,
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.googleMapsUri,places.rating,places.userRatingCount,places.location',
+    },
+    body: JSON.stringify({
+      includedTypes: NEARBY_TYPES[kind],
+      maxResultCount: 12,
+      rankPreference: 'POPULARITY',
+      locationRestriction: {
+        circle: {
+          center: { latitude: location.lat, longitude: location.lng },
+          radius: 1500,
+        },
+      },
+    }),
+  })
+
+  if (!response.ok) return []
+
+  const data = (await response.json()) as NearbySearchResponse
+  return (data.places ?? [])
+    .map((place) => {
+      const placeId = place.id?.replace(/^places\//, '') ?? ''
+      const title = place.displayName?.text?.trim()
+      if (!placeId || !title) return null
+      const address = place.formattedAddress ?? ''
+      const mapsUrl = place.googleMapsUri
+        ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title}, ${address}`)}`
+      const lat = place.location?.latitude
+      const lng = place.location?.longitude
+      const distanceKm =
+        lat != null && lng != null
+          ? haversineKm(location, { lat, lng })
+          : null
+      return {
+        placeId,
+        title,
+        address,
+        mapsUrl,
+        rating: place.rating ?? null,
+        reviewCount: place.userRatingCount ?? null,
+        distanceKm,
+      }
+    })
+    .filter((item): item is NearbyPlace => Boolean(item))
+    .filter((item) => item.rating == null || item.rating >= 3.8)
+    .sort((a, b) => {
+      const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0)
+      if (Math.abs(ratingDiff) > 0.05) return ratingDiff
+      return (a.distanceKm ?? 999) - (b.distanceKm ?? 999)
+    })
 }

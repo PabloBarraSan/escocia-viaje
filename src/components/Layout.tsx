@@ -3,14 +3,16 @@ import { useEffect, useState } from 'react'
 import { BottomNav } from './BottomNav'
 import { useSession } from '../hooks/useSession'
 import { TripProvider, useTripContext } from '../context/TripContext'
+import { getSupabaseConfigHint } from '../lib/supabase'
 import { WeatherProvider } from '../hooks/useWeather'
 
 function LocalModeBanner() {
   const { isLocalMode } = useTripContext()
-  if (!isLocalMode) return null
+  if (!isLocalMode || !import.meta.env.DEV) return null
   return (
-    <div className="bg-amber-100 px-4 py-2 text-center text-xs text-amber-800">
-      Mode local — configura Supabase per sincronitzar en temps real
+    <div className="bg-amber-100 px-4 py-2 text-center text-xs text-amber-900">
+      Mode local — {getSupabaseConfigHint()}. Després reinicia{' '}
+      <code className="rounded bg-amber-200/60 px-1">npm run dev</code>.
     </div>
   )
 }

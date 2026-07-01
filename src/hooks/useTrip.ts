@@ -19,15 +19,41 @@ import {
 } from '../lib/localStore'
 import type {
   Trip, Day, TripInfo, Idea, ChecklistItem, Suggestion, SuggestionCategory,
-  SuggestionStatus, Expense, DayMessage,
+  SuggestionStatus, Expense, DayMessage, Activity,
 } from '../lib/types'
 import { sortActivities, sortOrderForNewActivity } from '../lib/activities'
+import {
+  buildActivityRow,
+  markActivityColumnMissing,
+  missingActivityColumnFromError,
+  normalizeActivityRow,
+  resetActivityColumnFlags,
+} from '../lib/activitySchema'
 import {
   fetchCompanionTable,
   isCompanionTableEnabled,
 } from '../lib/supabaseFeatures'
 
 const REMOTE_CACHE_KEY = 'escocia_remote_cache'
+
+async function runActivityWrite(
+  build: () => Record<string, unknown>,
+  write: (payload: Record<string, unknown>) => PromiseLike<{
+    data: Record<string, unknown> | null
+    error: { code?: string; message?: string } | null
+  }>,
+): Promise<Activity> {
+  let payload = build()
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { data, error } = await write(payload)
+    if (!error && data) return normalizeActivityRow(data)
+    const missing = missingActivityColumnFromError(error)
+    if (!missing) throw error
+    markActivityColumnMissing(missing)
+    payload = build()
+  }
+  throw new Error('No s’han pogut desar l’activitat. Executa la migració 007 a Supabase.')
+}
 
 export function useTrip(code: string) {
   const [trip, setTrip] = useState<Trip | null>(null)
@@ -43,6 +69,7 @@ export function useTrip(code: string) {
 
   const loadSupabase = useCallback(async () => {
     const sb = getSupabase()
+    resetActivityColumnFlags()
 
     const { data: tripData, error: tripErr } = await sb
       .from('trips')
@@ -72,7 +99,11 @@ export function useTrip(code: string) {
 
     const enriched: Day[] = (daysData ?? []).map((day) => ({
       ...day,
-      activities: sortActivities((activitiesData ?? []).filter((a) => a.day_id === day.id)),
+      activities: sortActivities(
+        (activitiesData ?? [])
+          .filter((a) => a.day_id === day.id)
+          .map((a) => normalizeActivityRow(a)),
+      ),
       note: (notesData ?? []).find((n) => n.day_id === day.id),
     }))
     setDays(enriched)
@@ -224,23 +255,52 @@ export function useTrip(code: string) {
 
   const updateActivity = async (
     id: string,
-    updates: { time?: string; text?: string; description?: string; duration_minutes?: number | null },
+    updates: {
+      time?: string
+      text?: string
+      kind?: import('../lib/types').ActivityKind
+      votes?: string[]
+      place_name?: string | null
+      place_address?: string | null
+      description?: string
+      maps_url?: string | null
+      duration_minutes?: number | null
+    },
     user: string,
   ) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
       const updatedAt = new Date().toISOString()
-      const { error: updateError } = await sb
-        .from('activities')
-        .update({ ...updates, updated_by: user, updated_at: updatedAt })
-        .eq('id', id)
-      if (updateError) throw updateError
+      const existing = days.flatMap((day) => day.activities ?? []).find((a) => a.id === id)
+      if (!existing) return
+      const merged = { ...existing, ...updates }
+      const payload = buildActivityRow(
+        {
+          time: merged.time,
+          updated_by: user,
+          updated_at: updatedAt,
+        },
+        {
+          text: merged.text,
+          kind: merged.kind ?? 'plan',
+          votes: merged.votes ?? [],
+          place_name: merged.place_name ?? null,
+          place_address: merged.place_address ?? null,
+          description: merged.description ?? '',
+          maps_url: merged.maps_url ?? null,
+          duration_minutes: merged.duration_minutes,
+        },
+      )
+      await runActivityWrite(
+        () => payload,
+        (row) => sb.from('activities').update(row).eq('id', id).select('*').single(),
+      )
       setDays((current) => current.map((day) => ({
         ...day,
         activities: sortActivities(
           (day.activities ?? []).map((activity) =>
             activity.id === id
-              ? { ...activity, ...updates, updated_by: user, updated_at: updatedAt }
+              ? normalizeActivityRow({ ...activity, ...merged, updated_by: user, updated_at: updatedAt })
               : activity,
           ),
         ),
@@ -257,33 +317,69 @@ export function useTrip(code: string) {
     user: string,
     durationMinutes: number | null = null,
     description = '',
+    mapsUrl: string | null = null,
+    placeName: string | null = null,
+    placeAddress: string | null = null,
+    kind: import('../lib/types').ActivityKind = 'plan',
   ) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
       const { data: existing } = await sb.from('activities').select('*').eq('day_id', dayId)
       const sortOrder = sortOrderForNewActivity(existing ?? [], time || null)
-      const { data: created, error: insertError } = await sb
-        .from('activities')
-        .insert({
-          day_id: dayId,
-          text,
-          description,
-          time: time || null,
-          duration_minutes: durationMinutes,
-          sort_order: sortOrder,
-          updated_by: user,
-        })
-        .select('*')
-        .single()
-      if (insertError) throw insertError
+      const created = await runActivityWrite(
+        () => buildActivityRow(
+          {
+            day_id: dayId,
+            time: time || null,
+            sort_order: sortOrder,
+            updated_by: user,
+          },
+          {
+            text,
+            kind,
+            votes: [],
+            place_name: placeName,
+            place_address: placeAddress,
+            description,
+            maps_url: mapsUrl,
+            duration_minutes: durationMinutes,
+          },
+        ),
+        (row) => sb.from('activities').insert(row).select('*').single(),
+      )
       setDays((current) => current.map((day) =>
         day.id === dayId
           ? { ...day, activities: sortActivities([...(day.activities ?? []), created]) }
           : day,
       ))
     } else {
-      await addLocalActivity(dayId, text, time, user, durationMinutes, description)
+      await addLocalActivity(
+        dayId, text, time, user, durationMinutes, description, mapsUrl, placeName, placeAddress, kind,
+      )
     }
+  }
+
+  const voteActivity = async (id: string, user: string) => {
+    const activity = days.flatMap((d) => d.activities ?? []).find((a) => a.id === id)
+    if (!activity || activity.kind !== 'idea') return
+    const votes = activity.votes.includes(user)
+      ? activity.votes.filter((name) => name !== user)
+      : [...activity.votes, user]
+
+    if (isSupabaseConfigured) {
+      const sb = getSupabase()
+      const { error } = await sb.from('activities').update({ votes }).eq('id', id)
+      if (error) throw error
+    } else {
+      await updateLocalActivity(id, { votes }, user)
+    }
+
+    setDays((current) => current.map((day) => ({
+      ...day,
+      activities: (day.activities ?? []).map((item) =>
+        item.id === id ? { ...item, votes } : item,
+      ),
+    })))
   }
 
   const removeActivity = async (id: string) => {
@@ -506,6 +602,7 @@ export function useTrip(code: string) {
     saveNote,
     saveTripInfo,
     saveTripInfoByKey,
+    voteActivity,
     createIdea,
     voteIdea,
     createChecklistItem,

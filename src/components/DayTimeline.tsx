@@ -1,180 +1,83 @@
 import { useRef, useState } from 'react'
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ExternalLink, Lightbulb, Pencil, Plus } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import {
+  activityBlockClass,
   buildTimelineLayout,
-  DURATION_PRESETS,
   formatDuration,
   formatTimeRange,
   hourMarkers,
   minuteFromTimelineY,
   minutesToTime,
+  partitionActivities,
   sortActivities,
   suggestNextActivityTime,
   TIMELINE_PX_PER_HOUR,
 } from '../lib/activities'
-import type { Activity } from '../lib/types'
-
-type ActivityDraft = {
-  time: string
-  text: string
-  description: string
-  duration_minutes: number | null
-}
+import type { Activity, Day } from '../lib/types'
+import {
+  ActivityEditorFields,
+  ActivityEditorFooter,
+  type ActivityDraft,
+} from './ActivityEditorSheet'
+import { BottomSheet } from './BottomSheet'
 
 type EditorState =
   | { mode: 'add'; draft: ActivityDraft }
   | { mode: 'edit'; activityId: string; draft: ActivityDraft }
   | null
 
-function DurationPicker({
-  value,
-  onChange,
-}: {
-  value: number | null
-  onChange: (minutes: number | null) => void
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {DURATION_PRESETS.map((preset) => (
-        <button
-          key={preset.value}
-          type="button"
-          onClick={() => onChange(preset.value)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-            value === preset.value ? 'bg-highland-700 text-white' : 'bg-gray-100 text-gray-700'
-          }`}
-        >
-          {preset.label}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={() => onChange(null)}
-        className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-          value === null ? 'bg-highland-700 text-white' : 'bg-gray-100 text-gray-700'
-        }`}
-      >
-        Sense duració
-      </button>
-    </div>
-  )
-}
-
-function ActivityForm({
-  title,
-  draft,
-  onChange,
-  onSave,
-  onCancel,
-  onDelete,
-}: {
-  title: string
-  draft: ActivityDraft
-  onChange: (draft: ActivityDraft) => void
-  onSave: () => void
-  onCancel: () => void
-  onDelete?: () => void
-}) {
-  return (
-    <div className="space-y-3 rounded-2xl border-2 border-highland-300 bg-highland-50 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold text-highland-900">{title}</p>
-        <button type="button" onClick={onCancel} className="rounded-lg p-1 text-gray-400 hover:bg-white" aria-label="Tancar">
-          <X size={18} />
-        </button>
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">Hora</label>
-        <input
-          type="time"
-          value={draft.time}
-          onChange={(e) => onChange({ ...draft, time: e.target.value })}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">Títol</label>
-        <input
-          type="text"
-          value={draft.text}
-          onChange={(e) => onChange({ ...draft, text: e.target.value })}
-          placeholder="Què fem?"
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-          autoFocus
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">Descripció (opcional)</label>
-        <textarea
-          value={draft.description}
-          onChange={(e) => onChange({ ...draft, description: e.target.value })}
-          placeholder="Detalls, adreça, enllaç, recordatoris..."
-          rows={2}
-          className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">Duració</label>
-        <DurationPicker
-          value={draft.duration_minutes}
-          onChange={(duration_minutes) => onChange({ ...draft, duration_minutes })}
-        />
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!draft.text.trim()}
-          className="flex items-center gap-1 rounded-lg bg-highland-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-        >
-          <Check size={15} /> Guardar
-        </button>
-        {onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600"
-          >
-            <Trash2 size={15} /> Esborrar
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function emptyDraft(time = '09:00'): ActivityDraft {
-  return { time, text: '', description: '', duration_minutes: 60 }
+function emptyDraft(time = '09:00', kind: import('../lib/types').ActivityKind = 'plan'): ActivityDraft {
+  return {
+    kind,
+    time,
+    text: '',
+    place_name: '',
+    place_address: '',
+    description: '',
+    maps_url: '',
+    duration_minutes: kind === 'idea' ? null : 60,
+  }
 }
 
 function draftFromActivity(activity: Activity): ActivityDraft {
   return {
+    kind: activity.kind === 'idea' ? 'idea' : 'plan',
     time: activity.time ?? '',
     text: activity.text,
+    place_name: activity.place_name ?? '',
+    place_address: activity.place_address ?? '',
     description: activity.description ?? '',
+    maps_url: activity.maps_url ?? '',
     duration_minutes: activity.duration_minutes,
   }
 }
 
-export function DayTimeline({ dayId, activities }: { dayId: string; activities: Activity[] }) {
+export function DayTimeline({ day, activities }: { day: Day; activities: Activity[] }) {
   const { addActivity, updateActivity, removeActivity } = useTripContext()
   const { session } = useSession()
   const trackRef = useRef<HTMLDivElement>(null)
   const [editor, setEditor] = useState<EditorState>(null)
 
   const sorted = sortActivities(activities)
+  const { plans, ideas } = partitionActivities(sorted)
   const layout = buildTimelineLayout(sorted, TIMELINE_PX_PER_HOUR)
   const markers = hourMarkers(layout.startMinutes, layout.endMinutes)
 
-  const openAddAt = (minute: number) => {
-    setEditor({ mode: 'add', draft: emptyDraft(minutesToTime(minute)) })
+  const openAddAt = (minute: number, kind: import('../lib/types').ActivityKind = 'plan') => {
+    setEditor({ mode: 'add', draft: emptyDraft(minutesToTime(minute), kind) })
+  }
+
+  const openAddIdea = () => {
+    setEditor({ mode: 'add', draft: emptyDraft('', 'idea') })
   }
 
   const openEdit = (activity: Activity) => {
     setEditor({ mode: 'edit', activityId: activity.id, draft: draftFromActivity(activity) })
   }
+
+  const closeEditor = () => setEditor(null)
 
   const handleTrackClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('[data-activity-block]')) return
@@ -189,30 +92,51 @@ export function DayTimeline({ dayId, activities }: { dayId: string; activities: 
     const { draft } = editor
     if (editor.mode === 'add') {
       await addActivity(
-        dayId,
+        day.id,
         draft.text.trim(),
         draft.time,
         session.name,
         draft.duration_minutes,
         draft.description.trim(),
+        draft.maps_url.trim() || null,
+        draft.place_name.trim() || null,
+        draft.place_address.trim() || null,
+        draft.kind,
       )
     } else {
       await updateActivity(editor.activityId, {
         time: draft.time || undefined,
         text: draft.text.trim(),
+        kind: draft.kind,
+        place_name: draft.place_name.trim() || null,
+        place_address: draft.place_address.trim() || null,
         description: draft.description.trim(),
+        maps_url: draft.maps_url.trim() || null,
         duration_minutes: draft.duration_minutes,
       }, session.name)
     }
-    setEditor(null)
+    closeEditor()
   }
 
   const deleteEditor = async () => {
     if (!editor || editor.mode !== 'edit') return
     if (!confirm('Esborrar activitat?')) return
     await removeActivity(editor.activityId)
-    setEditor(null)
+    closeEditor()
   }
+
+  const confirmAsPlan = async () => {
+    if (!editor || editor.mode !== 'edit' || editor.draft.kind !== 'idea' || !session) return
+    await updateActivity(editor.activityId, {
+      kind: 'plan',
+      duration_minutes: editor.draft.duration_minutes ?? 60,
+    }, session.name)
+    closeEditor()
+  }
+
+  const sheetTitle = editor?.mode === 'add'
+    ? (editor.draft.kind === 'idea' ? 'Nova idea' : 'Nova activitat')
+    : (editor?.draft.kind === 'idea' ? 'Editar idea' : 'Editar activitat')
 
   return (
     <div className="space-y-4">
@@ -223,7 +147,8 @@ export function DayTimeline({ dayId, activities }: { dayId: string; activities: 
           <p className="mt-0.5 text-xs text-gray-500">Toca un espai buit per crear · toca un bloc per editar</p>
         </div>
         <span className="rounded-full bg-highland-50 px-2.5 py-1 text-xs font-semibold text-highland-700">
-          {sorted.length} {sorted.length === 1 ? 'activitat' : 'activitats'}
+          {plans.length} {plans.length === 1 ? 'pla' : 'plans'}
+          {ideas.length > 0 && ` · ${ideas.length} ${ideas.length === 1 ? 'idea' : 'idees'}`}
         </span>
       </div>
 
@@ -253,27 +178,54 @@ export function DayTimeline({ dayId, activities }: { dayId: string; activities: 
             style={{ height: layout.height }}
             aria-label="Horari del dia. Clica per afegir activitat."
           >
-            {layout.blocks.map(({ activity, top, height }) => (
+            {layout.blocks.map(({ activity, top, height }) => {
+              const isIdea = activity.kind === 'idea'
+              return (
               <button
                 key={activity.id}
                 type="button"
                 data-activity-block
                 onClick={(e) => { e.stopPropagation(); openEdit(activity) }}
-                className="absolute right-0 left-2 overflow-hidden rounded-xl border border-highland-300 bg-gradient-to-br from-highland-100 to-white px-3 py-2 text-left shadow-sm transition hover:border-highland-500 hover:shadow-md"
+                className={`absolute right-0 left-2 overflow-hidden rounded-xl border px-3 py-2 text-left shadow-sm transition hover:shadow-md ${activityBlockClass(activity.kind)}`}
                 style={{ top, height, minHeight: 40 }}
               >
-                <p className="truncate text-xs font-bold text-highland-800">
+                {isIdea && (
+                  <span className="mb-0.5 inline-flex items-center gap-0.5 rounded bg-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-900">
+                    <Lightbulb size={9} /> Idea
+                  </span>
+                )}
+                <p className={`truncate text-xs font-bold ${isIdea ? 'text-emerald-800' : 'text-highland-800'}`}>
                   {formatTimeRange(activity) ?? activity.time}
                 </p>
                 <p className="line-clamp-2 text-sm font-semibold leading-tight text-highland-900">{activity.text}</p>
+                {activity.place_name?.trim() && (
+                  <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-highland-700">
+                    📍 {activity.place_name}
+                  </p>
+                )}
+                {activity.place_address?.trim()
+                  && activity.place_address !== activity.place_name && (
+                  <p className="line-clamp-1 text-[10px] text-gray-500">{activity.place_address}</p>
+                )}
+                {activity.maps_url && (
+                  <a
+                    href={activity.maps_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-highland-700 underline-offset-2 hover:underline"
+                  >
+                    <ExternalLink size={10} /> Obrir a Maps
+                  </a>
+                )}
                 {activity.description?.trim() && (
                   <p className="mt-0.5 line-clamp-1 text-[10px] text-gray-600">{activity.description}</p>
                 )}
                 {activity.duration_minutes && (
-                  <p className="mt-0.5 text-[10px] text-highland-600">{formatDuration(activity.duration_minutes)}</p>
+                  <p className={`mt-0.5 text-[10px] ${isIdea ? 'text-emerald-700' : 'text-highland-600'}`}>{formatDuration(activity.duration_minutes)}</p>
                 )}
               </button>
-            ))}
+            )})}
             {layout.blocks.length === 0 && (
               <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-gray-400">
                 Clica aquí per començar l’horari
@@ -283,49 +235,84 @@ export function DayTimeline({ dayId, activities }: { dayId: string; activities: 
         </div>
       </div>
 
-      {editor && (
-        <ActivityForm
-          title={editor.mode === 'add' ? 'Nova activitat' : 'Editar activitat'}
-          draft={editor.draft}
-          onChange={(draft) => setEditor({ ...editor, draft })}
-          onSave={() => void saveEditor()}
-          onCancel={() => setEditor(null)}
-          onDelete={editor.mode === 'edit' ? () => void deleteEditor() : undefined}
-        />
-      )}
+      <BottomSheet
+        open={editor != null}
+        onClose={closeEditor}
+        title={sheetTitle}
+        footer={editor ? (
+          <ActivityEditorFooter
+            canSave={Boolean(editor.draft.text.trim())}
+            onSave={() => void saveEditor()}
+            onDelete={editor.mode === 'edit' ? () => void deleteEditor() : undefined}
+            onConfirmAsPlan={
+              editor.mode === 'edit' && editor.draft.kind === 'idea'
+                ? () => void confirmAsPlan()
+                : undefined
+            }
+          />
+        ) : undefined}
+      >
+        {editor && (
+          <ActivityEditorFields
+            day={day}
+            draft={editor.draft}
+            onChange={(draft) => setEditor({ ...editor, draft })}
+          />
+        )}
+      </BottomSheet>
 
       {layout.untimed.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Sense hora assignada</p>
-          {layout.untimed.map((activity) => (
+          {layout.untimed.map((activity) => {
+            const isIdea = activity.kind === 'idea'
+            return (
             <button
               key={activity.id}
               type="button"
               onClick={() => openEdit(activity)}
-              className="flex w-full items-start gap-3 rounded-xl border border-gray-100 bg-white p-3 text-left hover:border-highland-200"
+              className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left hover:shadow-sm ${
+                isIdea ? 'border-emerald-200 bg-emerald-50/60' : 'border-gray-100 bg-white hover:border-highland-200'
+              }`}
             >
-              <Pencil size={14} className="mt-1 shrink-0 text-gray-400" />
+              <Pencil size={14} className={`mt-1 shrink-0 ${isIdea ? 'text-emerald-500' : 'text-gray-400'}`} />
               <div className="min-w-0">
+                {isIdea && (
+                  <span className="mb-1 inline-flex items-center gap-0.5 text-[10px] font-bold uppercase text-emerald-800">
+                    <Lightbulb size={11} /> Idea
+                  </span>
+                )}
                 <p className="text-sm font-medium text-gray-900">{activity.text}</p>
+                {activity.place_name?.trim() && (
+                  <p className="mt-0.5 text-xs text-highland-700">📍 {activity.place_name}</p>
+                )}
                 {activity.description?.trim() && (
                   <p className="mt-0.5 text-xs text-gray-600">{activity.description}</p>
                 )}
               </div>
             </button>
-          ))}
+          )})}
         </div>
       )}
 
-      {!editor && (
+      <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={() => setEditor({ mode: 'add', draft: emptyDraft(suggestNextActivityTime(sorted)) })}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-highland-200 py-3 text-sm font-medium text-highland-700 hover:bg-highland-50"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-highland-200 py-3 text-sm font-medium text-highland-700 hover:bg-highland-50"
         >
           <Plus size={16} />
           Afegir activitat
         </button>
-      )}
+        <button
+          type="button"
+          onClick={openAddIdea}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 py-3 text-sm font-medium text-emerald-800 hover:bg-emerald-50"
+        >
+          <Lightbulb size={16} />
+          Proposar idea
+        </button>
+      </div>
     </div>
   )
 }

@@ -28,12 +28,19 @@ export interface Day {
   note?: DayNote
 }
 
+export type ActivityKind = 'plan' | 'idea'
+
 export interface Activity {
   id: string
   day_id: string
   time: string | null
   text: string
+  kind: ActivityKind
+  votes: string[]
+  place_name: string | null
+  place_address: string | null
   description: string
+  maps_url: string | null
   duration_minutes: number | null
   sort_order: number
   updated_by: string | null
@@ -147,35 +154,49 @@ export const LODGINGS_BY_DAY: Record<number, {
   name: string
   address: string
   phone: string
+  lat: number
+  lng: number
 }> = {
   1: {
     name: 'Drummond Condo',
     address: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
     phone: '+44 7738 940365',
+    lat: 55.9504,
+    lng: -3.1836,
   },
   2: {
     name: 'Drummond Condo',
     address: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
     phone: '+44 7738 940365',
+    lat: 55.9504,
+    lng: -3.1836,
   },
   4: {
     name: 'Bayview Hostel',
     address: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
     phone: '+44 1471 250300',
+    lat: 57.2542,
+    lng: -5.9097,
   },
   5: {
     name: 'Bayview Hostel',
     address: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
     phone: '+44 1471 250300',
+    lat: 57.2542,
+    lng: -5.9097,
   },
   6: {
     name: '3 Bedroom Apartment - Loch Linnhe Views',
     address: '13 Ross Place, Fort William, PH33 6JZ, United Kingdom',
     phone: '+44 7708 008880',
+    lat: 56.819,
+    lng: -5.111,
   },
   7: {
     name: 'JOIVY Royal Mile',
     address: '149 Cowgate, Old Town, Edinburgh, EH1 1JT, United Kingdom',
     phone: '+44 7506 822438',
+    lat: 55.9489,
+    lng: -3.1962,
   },
 }

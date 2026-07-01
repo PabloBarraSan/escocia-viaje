@@ -4,7 +4,6 @@ import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { Checklist } from '../components/Checklist'
 import { PendingDecisions } from '../components/PendingDecisions'
-import { IdeasBoard } from '../components/IdeasBoard'
 
 const INFO_LABELS: Record<string, string> = {
   nits_edimburg: 'Nits a Edimburg',
@@ -111,7 +110,6 @@ export function SummaryPage() {
       </div>
 
       <Checklist />
-      <IdeasBoard />
       <PendingDecisions />
     </div>
   )

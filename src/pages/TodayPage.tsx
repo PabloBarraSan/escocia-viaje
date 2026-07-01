@@ -9,7 +9,8 @@ import { WeatherCard } from '../components/WeatherCard'
 import { dayRoute } from '../lib/maps'
 import { CarLocationCard } from '../components/CarLocationCard'
 import { PhotoHero } from '../components/PhotoHero'
-import { FeaturedCard, PageSection } from '../components/PageSection'
+import { DayItineraryCard } from '../components/DayItineraryCard'
+import { PageSection } from '../components/PageSection'
 import { dayPhoto, heroTint } from '../lib/dayTheme'
 
 function todayKey() {
@@ -45,7 +46,12 @@ function nextMoment(days: Day[]) {
           day_id: day.id,
           time: '23:30',
           text: `Tornar a ${lodging.name}`,
+          kind: 'plan',
+          votes: [],
+          place_name: lodging.name,
+          place_address: lodging.address,
           description: '',
+          maps_url: null,
           duration_minutes: 30,
           sort_order: 999,
           updated_by: null,
@@ -85,8 +91,6 @@ export function TodayPage() {
   const isToday = day.date === today
   const upcoming = nextMoment(days)
   const route = dayRoute(day.day_number)
-  const activities = day.activities ?? []
-  const preview = activities.slice(0, 3)
   const lodgingDetails = LODGINGS_BY_DAY[day.day_number] ?? (
     day.lodging_address ? {
       name: day.lodging_name ?? day.lodging ?? 'Allotjament',
@@ -151,31 +155,11 @@ export function TodayPage() {
           </Link>
         )}
 
-        {preview.length > 0 && (
-          <FeaturedCard
-            eyebrow={isToday ? 'Pla d’avui' : 'Pròxim pla'}
-            title="Itinerari"
-            badge={`${activities.length} ${activities.length === 1 ? 'activitat' : 'activitats'}`}
-          >
-            <div className="space-y-2">
-              {preview.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-highland-50/40 p-3.5">
-                  {activity.time && (
-                    <span className="shrink-0 rounded-lg bg-highland-100 px-2.5 py-1 text-sm font-bold text-highland-800">
-                      {activity.time}
-                    </span>
-                  )}
-                  <p className="text-base leading-snug text-gray-900">{activity.text}</p>
-                </div>
-              ))}
-            </div>
-            {activities.length > preview.length && (
-              <p className="mt-3 text-center text-xs font-medium text-highland-600">
-                +{activities.length - preview.length} més al dia complet
-              </p>
-            )}
-          </FeaturedCard>
-        )}
+        <DayItineraryCard
+          day={day}
+          editHref={`/dia/${day.day_number}/horari`}
+          eyebrow={isToday ? 'Itinerari d’avui' : 'Pròxim itinerari'}
+        />
 
         <WeatherCard day={day} />
 

@@ -1,4 +1,4 @@
-import type { Activity } from './types'
+import type { Activity, ActivityKind } from './types'
 
 const END_OF_DAY = 24 * 60
 const DEFAULT_DAY_START = 8 * 60
@@ -47,6 +47,21 @@ export function formatTimeRange(activity: Activity) {
   const start = activity.time.slice(0, 5)
   if (!activity.duration_minutes) return start
   return `${start} – ${minutesToTime(activityEndMinutes(activity))}`
+}
+
+export function activityBlockClass(kind: ActivityKind) {
+  if (kind === 'idea') {
+    return 'border-emerald-400 bg-gradient-to-br from-emerald-100 to-white hover:border-emerald-500'
+  }
+  return 'border-highland-300 bg-gradient-to-br from-highland-100 to-white hover:border-highland-500'
+}
+
+export function partitionActivities(activities: Activity[]) {
+  const sorted = sortActivities(activities)
+  return {
+    plans: sorted.filter((a) => a.kind !== 'idea'),
+    ideas: sorted.filter((a) => a.kind === 'idea'),
+  }
 }
 
 export function sortActivities(activities: Activity[]) {

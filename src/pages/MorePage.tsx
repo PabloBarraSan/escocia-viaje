@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, ClipboardCheck, FileLock2, LogOut, ReceiptText, Text } from 'lucide-react'
+import { ChevronRight, ClipboardCheck, Download, FileLock2, LogOut, ReceiptText, Text } from 'lucide-react'
 import { useSession } from '../hooks/useSession'
+import { requestInstallPrompt } from '../components/InstallBanner'
+import { useInstallApp } from '../hooks/useInstallApp'
 
 const ITEMS = [
   {
@@ -29,6 +31,7 @@ const ITEMS = [
 
 export function MorePage() {
   const { session, logout } = useSession()
+  const { canInstall } = useInstallApp()
   const [largeText, setLargeText] = useState(() => localStorage.getItem('large_text') === 'true')
 
   useEffect(() => {
@@ -60,6 +63,23 @@ export function MorePage() {
           )
         })}
       </div>
+
+      {canInstall && (
+        <button
+          type="button"
+          onClick={requestInstallPrompt}
+          className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-highland-100 text-highland-800">
+            <Download size={23} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg font-bold text-highland-900">Instal·lar l’app</span>
+            <span className="block text-sm text-gray-500">Accés ràpid des de la pantalla principal</span>
+          </span>
+          <ChevronRight size={21} className="text-gray-300" />
+        </button>
+      )}
 
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-center gap-3">
