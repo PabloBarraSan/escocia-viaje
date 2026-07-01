@@ -8,6 +8,8 @@ import { SummaryPage } from './pages/SummaryPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { TodayPage } from './pages/TodayPage'
 import { InstallBanner } from './components/InstallBanner'
+import { MorePage } from './pages/MorePage'
+import { ExpensesPage } from './pages/ExpensesPage'
 import { Layout } from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -27,12 +29,15 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route path="/" element={<TimelinePage />} />
+          <Route path="/" element={<TodayPage />} />
+          <Route path="/dies" element={<TimelinePage />} />
           <Route path="/dia/:dayNum" element={<DayPage />} />
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/resum" element={<SummaryPage />} />
           <Route path="/reservas" element={<ReservationsPage />} />
-          <Route path="/avui" element={<TodayPage />} />
+          <Route path="/avui" element={<Navigate to="/" replace />} />
+          <Route path="/mes" element={<MorePage />} />
+          <Route path="/despeses" element={<ExpensesPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

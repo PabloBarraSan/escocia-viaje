@@ -3,8 +3,9 @@ import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS } from '../lib/types'
 import type { Day } from '../lib/types'
-import { BedDouble, CalendarDays, ChevronRight, Clock3, LogOut, MapPin } from 'lucide-react'
+import { BedDouble, CalendarDays, ChevronRight, Clock3, MapPin } from 'lucide-react'
 import { WeatherBadge } from '../components/WeatherCard'
+import { DAY_TYPE_HERO } from '../lib/dayTheme'
 
 const DAY_MS = 86_400_000
 
@@ -76,7 +77,7 @@ function DayRow({ day }: { day: Day }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-xs font-medium text-gray-500">{day.label}</p>
-              <h2 className="mt-0.5 flex items-center gap-1.5 text-lg font-bold text-highland-800">
+              <h2 className="mt-0.5 flex items-center gap-1.5 font-display text-lg font-bold text-highland-800">
                 <MapPin size={16} />
                 {day.base_city}
               </h2>
@@ -128,7 +129,7 @@ function DayRow({ day }: { day: Day }) {
 
 export function TimelinePage() {
   const { days, trip, loading, error } = useTripContext()
-  const { session, logout } = useSession()
+  const { session } = useSession()
 
   if (loading) {
     return (
@@ -151,32 +152,33 @@ export function TimelinePage() {
   return (
     <div className="safe-top">
       <header className="sticky top-0 z-40 bg-highland-50/95 px-4 pb-3 pt-4 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-highland-800">{trip?.title}</h1>
-            <p className="text-sm text-gray-500">Hola, {session?.name}!</p>
-          </div>
-          <button onClick={logout} className="rounded-full p-2 text-gray-400 hover:text-gray-600" aria-label="Sortir">
-            <LogOut size={20} />
-          </button>
+        <div>
+            <h1 className="font-display text-xl font-bold text-highland-800">{trip?.title}</h1>
+          <p className="text-sm text-gray-500">Hola, {session?.name}!</p>
         </div>
       </header>
 
-      {status && (
+      {status && (() => {
+        const hero = DAY_TYPE_HERO[status.day.type]
+        return (
         <div className="px-4 pb-5">
           <Link
             to={`/dia/${status.day.day_number}`}
-            className="block overflow-hidden rounded-3xl bg-gradient-to-br from-highland-800 to-highland-700 p-5 text-white shadow-lg"
+            className={`animate-fade-in block overflow-hidden rounded-3xl bg-gradient-to-br ${hero.gradient} p-5 text-white shadow-lg`}
           >
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-highland-200">
-              <CalendarDays size={15} />
-              {status.eyebrow}
-            </p>
-            <h2 className="mt-2 text-2xl font-bold">{status.title}</h2>
-            <p className="mt-1 text-sm text-highland-100">{status.detail}</p>
+            <div className="flex items-start justify-between gap-3">
+              <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${hero.accent}`}>
+                <CalendarDays size={15} />
+                {status.eyebrow}
+              </p>
+              <span className="text-2xl" aria-hidden="true">{hero.emoji}</span>
+            </div>
+            <h2 className="mt-2 font-display text-2xl font-bold">{status.title}</h2>
+            <p className={`mt-1 text-sm ${hero.accent}`}>{status.detail}</p>
           </Link>
         </div>
-      )}
+        )
+      })()}
 
       <main className="space-y-3 px-4">
         <div className="flex items-end justify-between">

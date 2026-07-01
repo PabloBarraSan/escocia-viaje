@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft, ChevronRight, Bed, MapPinned, Navigation, Phone } from 'lucide-react'
+import {
+  ArrowLeft, ChevronLeft, ChevronRight, Bed, MapPinned, Navigation, Phone,
+} from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { ActivityList } from '../components/ActivityList'
 import { NotesPanel } from '../components/NotesPanel'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS, LODGINGS_BY_DAY } from '../lib/types'
 import { SuggestionsBoard } from '../components/SuggestionsBoard'
+import { IdeasBoard } from '../components/IdeasBoard'
+import { ShareWhatsAppButton } from '../components/ShareWhatsAppButton'
 import { WeatherCard } from '../components/WeatherCard'
 import { dayRoute } from '../lib/maps'
 
@@ -24,7 +28,7 @@ export function DayPage() {
     return (
       <div className="flex min-h-full flex-col items-center justify-center p-6">
         <p className="text-gray-500">Dia no trobat</p>
-        <Link to="/" className="mt-4 text-highland-700">Tornar</Link>
+        <Link to="/dies" className="mt-4 text-highland-700">Tornar</Link>
       </div>
     )
   }
@@ -48,16 +52,17 @@ export function DayPage() {
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lodgingDetails.address)}&travelmode=driving`
     : null
   const route = dayRoute(day.day_number)
+  const isSkyeDay = day.day_number === 4 || day.day_number === 5
 
   return (
     <div className="safe-top">
       <header className="sticky top-0 z-40 bg-highland-50/95 backdrop-blur border-b border-highland-100 px-4 py-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="rounded-full p-2 hover:bg-highland-100" aria-label="Tornar">
+          <button onClick={() => navigate('/dies')} className="rounded-full p-2 hover:bg-highland-100" aria-label="Tornar">
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-highland-800">Dia {day.day_number}</h1>
+            <h1 className="font-display text-lg font-bold text-highland-800">Dia {day.day_number}</h1>
             <p className="text-sm text-gray-500">{day.label}</p>
           </div>
           <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${DAY_TYPE_COLORS[day.type]}`}>
@@ -80,6 +85,7 @@ export function DayPage() {
 
       <div className="space-y-6 p-4">
         <WeatherCard day={day} />
+        <ShareWhatsAppButton day={day} />
         {route && (
           <a href={route.url} target="_blank" rel="noreferrer" className="block rounded-2xl bg-highland-800 p-4 text-white shadow-sm">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-highland-200">
@@ -133,8 +139,25 @@ export function DayPage() {
         </div>
 
         <ActivityList dayId={day.id} activities={day.activities ?? []} />
-        <SuggestionsBoard day={day} />
-        <NotesPanel dayId={day.id} note={day.note} />
+        {isSkyeDay && <IdeasBoard />}
+        <details className="group rounded-2xl bg-white shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-4 text-base font-bold text-highland-900">
+            Suggeriments i llocs
+            <ChevronRight size={19} className="transition group-open:rotate-90" />
+          </summary>
+          <div className="border-t border-gray-100 p-4">
+            <SuggestionsBoard day={day} />
+          </div>
+        </details>
+        <details className="group rounded-2xl bg-white shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-4 text-base font-bold text-highland-900">
+            Notes del grup
+            <ChevronRight size={19} className="transition group-open:rotate-90" />
+          </summary>
+          <div className="border-t border-gray-100 p-4">
+            <NotesPanel dayId={day.id} note={day.note} />
+          </div>
+        </details>
       </div>
     </div>
   )

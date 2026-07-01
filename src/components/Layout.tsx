@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { BottomNav } from './BottomNav'
 import { useSession } from '../hooks/useSession'
 import { TripProvider, useTripContext } from '../context/TripContext'
+import { WeatherProvider } from '../hooks/useWeather'
 
 function LocalModeBanner() {
   const { isLocalMode } = useTripContext()
@@ -31,13 +32,15 @@ export function Layout() {
 
   return (
     <TripProvider code={session.code}>
-      <div className="flex min-h-full flex-col">
-        <LocalModeBanner />
-        {!online && <div className="bg-slate-800 px-4 py-2 text-center text-xs font-semibold text-white">Mode offline · mostrant l’última informació guardada</div>}
-        <Outlet />
-        <div className="h-20" />
-        <BottomNav />
-      </div>
+      <WeatherProvider>
+        <div className="flex min-h-full flex-col">
+          <LocalModeBanner />
+          {!online && <div className="bg-slate-800 px-4 py-2 text-center text-xs font-semibold text-white">Mode offline · mostrant l’última informació guardada</div>}
+          <Outlet />
+          <div className="h-20" />
+          <BottomNav />
+        </div>
+      </WeatherProvider>
     </TripProvider>
   )
 }

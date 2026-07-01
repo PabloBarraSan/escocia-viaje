@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
+document.documentElement.classList.toggle('large-text', localStorage.getItem('large_text') === 'true')
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

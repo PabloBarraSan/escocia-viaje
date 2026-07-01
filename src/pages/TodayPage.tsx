@@ -4,6 +4,7 @@ import { useTripContext } from '../context/TripContext'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import type { Day } from '../lib/types'
 import { WeatherCard } from '../components/WeatherCard'
+import { ShareWhatsAppButton } from '../components/ShareWhatsAppButton'
 import { dayRoute } from '../lib/maps'
 import { CarLocationCard } from '../components/CarLocationCard'
 
@@ -94,7 +95,7 @@ export function TodayPage() {
         <p className="text-xs font-bold uppercase tracking-wider text-highland-600">
           {day.date === today ? 'Avui' : 'Pròxim dia'}
         </p>
-        <h1 className="text-3xl font-bold text-highland-900">{day.base_city}</h1>
+        <h1 className="font-display text-3xl font-bold text-highland-900">{day.base_city}</h1>
         <p className="text-sm text-gray-500">{day.label} · Dia {day.day_number}</p>
       </header>
 
@@ -124,16 +125,18 @@ export function TodayPage() {
       )}
 
       <WeatherCard day={day} compact />
-      <CarLocationCard compact />
+      {day.day_number >= 3 && day.day_number <= 7 && <CarLocationCard compact />}
 
       <div className="grid grid-cols-2 gap-3">
-        <a href={route?.url ?? directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
+        <a href={route?.url ?? directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white transition active:scale-[0.98]">
           <Navigation size={19} /> Ruta del dia
         </a>
-        <Link to={`/dia/${day.day_number}`} className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm">
+        <Link to={`/dia/${day.day_number}`} className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm transition active:scale-[0.98]">
           <CalendarCheck size={19} /> Veure dia
         </Link>
       </div>
+
+      <ShareWhatsAppButton day={day} />
 
       {day.lodging && (
         <section className="rounded-2xl bg-white p-4 shadow-sm">

@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
   --color-highland-50: #f0f4f0;
   --color-highland-100: #dce8dc;
   --color-highland-200: #b8d1b8;
@@ -40,4 +41,36 @@ body {
 
 .safe-top {
   padding-top: env(safe-area-inset-top);
+}
+
+html.large-text {
+  font-size: 18px;
+}
+
+html.large-text button,
+html.large-text a {
+  min-height: 44px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes vote-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
+
+.animate-vote-pop {
+  animation: vote-pop 0.25s ease-out;
 }

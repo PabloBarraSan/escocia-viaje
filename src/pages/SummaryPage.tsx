@@ -3,8 +3,8 @@ import { Car, Bed, Pencil, Check, X } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { Checklist } from '../components/Checklist'
-import { ExpensesPanel } from '../components/ExpensesPanel'
 import { PendingDecisions } from '../components/PendingDecisions'
+import { IdeasBoard } from '../components/IdeasBoard'
 
 const INFO_LABELS: Record<string, string> = {
   nits_edimburg: 'Nits a Edimburg',
@@ -78,7 +78,7 @@ export function SummaryPage() {
   return (
     <div className="safe-top space-y-6 p-4">
       <header>
-        <h1 className="text-xl font-bold text-highland-800">Resum del viatge</h1>
+        <h1 className="font-display text-xl font-bold text-highland-800">Resum del viatge</h1>
         <p className="text-sm text-gray-500">{days.length} dies · 5–12 juliol 2026</p>
       </header>
 
@@ -111,8 +111,8 @@ export function SummaryPage() {
       </div>
 
       <Checklist />
+      <IdeasBoard />
       <PendingDecisions />
-      <ExpensesPanel />
     </div>
   )
 }
