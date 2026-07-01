@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-highland-50: #f0f4f0;
+  --color-highland-100: #dce8dc;
+  --color-highland-200: #b8d1b8;
+  --color-highland-500: #4a7c59;
+  --color-highland-700: #2d5a3d;
+  --color-highland-800: #1e3a2f;
+  --color-highland-900: #142820;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-highland-50);
+  color: var(--color-highland-900);
+  overscroll-behavior: none;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 1rem;
+  z-index: 0;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}

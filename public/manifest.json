@@ -1,0 +1,18 @@
+{
+  "name": "Nova Ruta Escòcia",
+  "short_name": "Escòcia",
+  "description": "Itinerari compartit del viatge a Escòcia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f4f0",
+  "theme_color": "#1e3a2f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
