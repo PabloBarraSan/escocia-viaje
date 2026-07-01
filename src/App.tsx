@@ -7,6 +7,7 @@ import { MapPage } from './pages/MapPage'
 import { SummaryPage } from './pages/SummaryPage'
 import { ReservationsPage } from './pages/ReservationsPage'
 import { TodayPage } from './pages/TodayPage'
+import { InstallBanner } from './components/InstallBanner'
 import { Layout } from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <InstallBanner />
     </BrowserRouter>
   )
 }
