@@ -189,7 +189,20 @@ export function useTrip(code: string) {
   const updateActivity = async (id: string, updates: { time?: string; text?: string }, user: string) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
-      await sb.from('activities').update({ ...updates, updated_by: user, updated_at: new Date().toISOString() }).eq('id', id)
+      const updatedAt = new Date().toISOString()
+      const { error: updateError } = await sb
+        .from('activities')
+        .update({ ...updates, updated_by: user, updated_at: updatedAt })
+        .eq('id', id)
+      if (updateError) throw updateError
+      setDays((current) => current.map((day) => ({
+        ...day,
+        activities: day.activities?.map((activity) =>
+          activity.id === id
+            ? { ...activity, ...updates, updated_by: user, updated_at: updatedAt }
+            : activity,
+        ),
+      })))
     } else {
       await updateLocalActivity(id, updates, user)
     }
@@ -200,7 +213,17 @@ export function useTrip(code: string) {
       const sb = getSupabase()
       const { data: existing } = await sb.from('activities').select('sort_order').eq('day_id', dayId)
       const maxOrder = Math.max(0, ...(existing ?? []).map((a) => a.sort_order))
-      await sb.from('activities').insert({ day_id: dayId, text, time, sort_order: maxOrder + 1, updated_by: user })
+      const { data: created, error: insertError } = await sb
+        .from('activities')
+        .insert({ day_id: dayId, text, time, sort_order: maxOrder + 1, updated_by: user })
+        .select('*')
+        .single()
+      if (insertError) throw insertError
+      setDays((current) => current.map((day) =>
+        day.id === dayId
+          ? { ...day, activities: [...(day.activities ?? []), created] }
+          : day,
+      ))
     } else {
       await addLocalActivity(dayId, text, time, user)
     }
@@ -208,7 +231,12 @@ export function useTrip(code: string) {
 
   const removeActivity = async (id: string) => {
     if (isSupabaseConfigured) {
-      await getSupabase().from('activities').delete().eq('id', id)
+      const { error: deleteError } = await getSupabase().from('activities').delete().eq('id', id)
+      if (deleteError) throw deleteError
+      setDays((current) => current.map((day) => ({
+        ...day,
+        activities: day.activities?.filter((activity) => activity.id !== id),
+      })))
     } else {
       await deleteLocalActivity(id)
     }
