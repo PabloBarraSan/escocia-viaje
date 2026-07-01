@@ -36,11 +36,19 @@ body {
 }
 
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
 }
 
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1.25rem);
+}
+
+.sticky-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  backdrop-filter: blur(8px);
 }
 
 html.large-text {
@@ -50,6 +58,10 @@ html.large-text {
 html.large-text button,
 html.large-text a {
   min-height: 44px;
+}
+
+.hero-safe-padding {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1.25rem);
 }
 
 .font-display {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
+import { sortActivities } from '../lib/activities'
 import type { Activity } from '../lib/types'
 
 function formatUpdated(updatedBy: string | null, updatedAt: string) {
@@ -96,10 +97,12 @@ export function ActivityList({ dayId, activities }: { dayId: string; activities:
     setAdding(false)
   }
 
+  const sorted = sortActivities(activities)
+
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Activitats</h3>
-      {activities.map((a) => (
+      {sorted.map((a) => (
         <ActivityItem key={a.id} activity={a} />
       ))}
 

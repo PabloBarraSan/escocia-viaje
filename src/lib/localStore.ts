@@ -1,4 +1,5 @@
 import type { Trip, Day, Activity, DayNote, TripInfo, Idea, ChecklistItem } from './types'
+import { sortActivities, sortOrderForNewActivity } from './activities'
 import { TRIP_CODE } from './types'
 
 const STORAGE_KEY = 'escocia_local_data'
@@ -124,9 +125,7 @@ export async function fetchLocalTrip(code: string) {
 export function getLocalDaysWithActivities(data: StoreData): Day[] {
   return data.days.map((day) => ({
     ...day,
-    activities: data.activities
-      .filter((a) => a.day_id === day.id)
-      .sort((a, b) => a.sort_order - b.sort_order),
+    activities: sortActivities(data.activities.filter((a) => a.day_id === day.id)),
     note: data.notes.find((n) => n.day_id === day.id),
   }))
 }
@@ -142,13 +141,14 @@ export async function updateLocalActivity(id: string, updates: Partial<Activity>
 
 export async function addLocalActivity(dayId: string, text: string, time: string, user: string) {
   const data = load()
-  const maxOrder = Math.max(0, ...data.activities.filter((a) => a.day_id === dayId).map((a) => a.sort_order))
+  const dayActivities = data.activities.filter((a) => a.day_id === dayId)
+  const sort_order = sortOrderForNewActivity(dayActivities, time || null)
   data.activities.push({
     id: crypto.randomUUID(),
     day_id: dayId,
     time,
     text,
-    sort_order: maxOrder + 1,
+    sort_order,
     updated_by: user,
     updated_at: new Date().toISOString(),
   })

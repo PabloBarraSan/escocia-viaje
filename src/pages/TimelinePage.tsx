@@ -5,7 +5,8 @@ import { DAY_TYPE_COLORS, DAY_TYPE_LABELS } from '../lib/types'
 import type { Day } from '../lib/types'
 import { BedDouble, CalendarDays, ChevronRight, Clock3, MapPin } from 'lucide-react'
 import { WeatherBadge } from '../components/WeatherCard'
-import { DAY_TYPE_HERO } from '../lib/dayTheme'
+import { PhotoHero, DayPhotoThumb } from '../components/PhotoHero'
+import { DAY_TYPE_HERO, dayPhoto, heroTint } from '../lib/dayTheme'
 
 const DAY_MS = 86_400_000
 
@@ -58,20 +59,17 @@ function DayRow({ day }: { day: Day }) {
   const isPast = day.date < today
   const activities = day.activities ?? []
 
+  const photo = dayPhoto(day)
+
   return (
     <Link
       to={`/dia/${day.day_number}`}
-      className={`block rounded-2xl border bg-white p-4 shadow-sm transition active:scale-[0.99] ${
+      className={`block overflow-hidden rounded-2xl border bg-white shadow-sm transition active:scale-[0.99] ${
         isToday ? 'border-highland-500 ring-2 ring-highland-100' : 'border-highland-100'
       } ${isPast ? 'opacity-70' : ''}`}
     >
-      <div className="flex items-start gap-3">
-        <div className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl ${
-          isToday ? 'bg-highland-700 text-white' : 'bg-highland-100 text-highland-700'
-        }`}>
-          <span className="text-[10px] font-semibold uppercase leading-none">Dia</span>
-          <span className="text-xl font-bold leading-none">{day.day_number}</span>
-        </div>
+      <div className="flex items-start gap-3 p-4">
+        <DayPhotoThumb dayNumber={day.day_number} photo={photo.url} alt={photo.label} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
@@ -150,8 +148,8 @@ export function TimelinePage() {
   const status = tripStatus(days)
 
   return (
-    <div className="safe-top">
-      <header className="sticky top-0 z-40 bg-highland-50/95 px-4 pb-3 pt-4 backdrop-blur">
+    <div>
+      <header className="sticky-page-header bg-highland-50/95 px-4 pb-3 backdrop-blur">
         <div>
             <h1 className="font-display text-xl font-bold text-highland-800">{trip?.title}</h1>
           <p className="text-sm text-gray-500">Hola, {session?.name}!</p>
@@ -160,22 +158,28 @@ export function TimelinePage() {
 
       {status && (() => {
         const hero = DAY_TYPE_HERO[status.day.type]
+        const photo = dayPhoto(status.day)
         return (
         <div className="px-4 pb-5">
-          <Link
+          <PhotoHero
+            photo={photo.url}
+            alt={photo.label}
+            tint={heroTint(status.day)}
             to={`/dia/${status.day.day_number}`}
-            className={`animate-fade-in block overflow-hidden rounded-3xl bg-gradient-to-br ${hero.gradient} p-5 text-white shadow-lg`}
+            minHeight="10.5rem"
           >
-            <div className="flex items-start justify-between gap-3">
-              <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${hero.accent}`}>
-                <CalendarDays size={15} />
-                {status.eyebrow}
-              </p>
-              <span className="text-2xl" aria-hidden="true">{hero.emoji}</span>
+            <div className="flex h-full min-h-[10.5rem] flex-col justify-end p-5 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${hero.accent}`}>
+                  <CalendarDays size={15} />
+                  {status.eyebrow}
+                </p>
+                <span className="text-2xl" aria-hidden="true">{hero.emoji}</span>
+              </div>
+              <h2 className="mt-2 font-display text-2xl font-bold">{status.title}</h2>
+              <p className={`mt-1 text-sm ${hero.accent}`}>{status.detail}</p>
             </div>
-            <h2 className="mt-2 font-display text-2xl font-bold">{status.title}</h2>
-            <p className={`mt-1 text-sm ${hero.accent}`}>{status.detail}</p>
-          </Link>
+          </PhotoHero>
         </div>
         )
       })()}

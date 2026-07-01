@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
-import { BedDouble, CalendarCheck, Clock3, ExternalLink, MapPinned, Navigation, Phone, ShieldCheck } from 'lucide-react'
+import {
+  ArrowRight, BedDouble, CalendarCheck, Clock3, MapPinned, Navigation,
+} from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import type { Day } from '../lib/types'
@@ -7,6 +9,8 @@ import { WeatherCard } from '../components/WeatherCard'
 import { ShareWhatsAppButton } from '../components/ShareWhatsAppButton'
 import { dayRoute } from '../lib/maps'
 import { CarLocationCard } from '../components/CarLocationCard'
+import { PhotoHero } from '../components/PhotoHero'
+import { dayPhoto, heroTint } from '../lib/dayTheme'
 
 function todayKey() {
   const date = new Date()
@@ -68,7 +72,7 @@ function nextMoment(days: Day[]) {
 }
 
 export function TodayPage() {
-  const { days, suggestions, tripInfo } = useTripContext()
+  const { days } = useTripContext()
   const today = todayKey()
   const day = days.find((item) => item.date === today)
     ?? days.find((item) => item.date > today)
@@ -76,8 +80,11 @@ export function TodayPage() {
 
   if (!day) return null
 
-  const selected = suggestions.filter((item) => item.day_id === day.id && item.status === 'selected')
-  const practical = tripInfo.filter((item) => ['vols', 'matricula_cotxe', 'telefon_emergencia', 'asseguranca'].includes(item.key) && item.value)
+  const isToday = day.date === today
+  const upcoming = nextMoment(days)
+  const route = dayRoute(day.day_number)
+  const activities = day.activities ?? []
+  const preview = activities.slice(0, 3)
   const lodgingDetails = LODGINGS_BY_DAY[day.day_number] ?? (
     day.lodging_address ? {
       name: day.lodging_name ?? day.lodging ?? 'Allotjament',
@@ -85,24 +92,32 @@ export function TodayPage() {
       phone: day.lodging_phone ?? '',
     } : null
   )
-  const lodgingRoute = lodgingDetails ? directions(lodgingDetails.address) : null
-  const upcoming = nextMoment(days)
-  const route = dayRoute(day.day_number)
+  const lodgingRoute = lodgingDetails?.address ? directions(lodgingDetails.address) : null
+  const photo = dayPhoto(day)
 
   return (
-    <main className="safe-top space-y-5 p-4">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-highland-600">
-          {day.date === today ? 'Avui' : 'Pròxim dia'}
-        </p>
-        <h1 className="font-display text-3xl font-bold text-highland-900">{day.base_city}</h1>
-        <p className="text-sm text-gray-500">{day.label} · Dia {day.day_number}</p>
-      </header>
+    <main className="pb-4">
+      <PhotoHero
+        photo={photo.url}
+        alt={photo.label}
+        tint={heroTint(day)}
+        className="rounded-none shadow-md"
+        minHeight="12.5rem"
+      >
+        <div className="hero-safe-padding flex min-h-[12.5rem] flex-col justify-end p-5 text-white">
+          <p className="text-xs font-bold uppercase tracking-wider text-white/80">
+            {isToday ? 'Avui' : 'Pròxim dia'}
+          </p>
+          <h1 className="font-display text-3xl font-bold">{day.base_city}</h1>
+          <p className="mt-1 text-sm text-white/75">{day.label} · Dia {day.day_number}</p>
+        </div>
+      </PhotoHero>
 
+      <div className="space-y-5 px-4 pt-5">
       {upcoming && (
         <Link
           to={`/dia/${upcoming.day.day_number}`}
-          className="block rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-amber-950 shadow-lg"
+          className="animate-fade-in block rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-amber-950 shadow-lg transition active:scale-[0.99]"
         >
           <div className="flex items-center justify-between gap-3">
             <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
@@ -127,71 +142,68 @@ export function TodayPage() {
       <WeatherCard day={day} compact />
       {day.day_number >= 3 && day.day_number <= 7 && <CarLocationCard compact />}
 
-      <div className="grid grid-cols-2 gap-3">
-        <a href={route?.url ?? directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white transition active:scale-[0.98]">
-          <Navigation size={19} /> Ruta del dia
+      <section className="grid grid-cols-2 gap-3">
+        <a
+          href={route?.url ?? directions(`${day.base_city}, Scotland`)}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white transition active:scale-[0.98]"
+        >
+          <Navigation size={19} /> Ruta
         </a>
-        <Link to={`/dia/${day.day_number}`} className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm transition active:scale-[0.98]">
-          <CalendarCheck size={19} /> Veure dia
-        </Link>
-      </div>
-
-      <ShareWhatsAppButton day={day} />
-
-      {day.lodging && (
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500"><BedDouble size={16} /> Aquesta nit</h2>
-          <p className="mt-2 font-semibold text-highland-900">{day.lodging}</p>
-          {lodgingDetails?.name && <p className="mt-1 text-sm font-semibold text-highland-700">{lodgingDetails.name}</p>}
-          {lodgingDetails?.address && <p className="mt-1 text-sm text-gray-500">{lodgingDetails.address}</p>}
-          {lodgingRoute && (
-            <a href={lodgingRoute} target="_blank" rel="noreferrer" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-highland-700 px-3 py-2 text-sm font-semibold text-white">
-              <Navigation size={16} /> Anar a l’allotjament
-            </a>
-          )}
-        </section>
-      )}
-
-      <section>
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">Pla del dia</h2>
-        <div className="space-y-2">
-          {(day.activities ?? []).map((activity) => (
-            <div key={activity.id} className="flex gap-3 rounded-xl bg-white p-3 shadow-sm">
-              <span className="w-12 shrink-0 text-sm font-bold text-highland-700">{activity.time || '—'}</span>
-              <span className="text-sm text-gray-700">{activity.text}</span>
-            </div>
-          ))}
-        </div>
+        {lodgingRoute ? (
+          <a
+            href={lodgingRoute}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm transition active:scale-[0.98]"
+          >
+            <BedDouble size={19} /> Allotjament
+          </a>
+        ) : (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`petrol station near ${day.base_city}, Scotland`)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm transition active:scale-[0.98]"
+          >
+            <MapPinned size={19} /> Benzinera
+          </a>
+        )}
       </section>
 
-      {selected.length > 0 && (
-        <section>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">Llocs elegits</h2>
+      {preview.length > 0 && (
+        <section className="rounded-2xl bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-500">Properes activitats</h2>
+            {activities.length > preview.length && (
+              <span className="text-xs text-gray-400">+{activities.length - preview.length} més</span>
+            )}
+          </div>
           <div className="space-y-2">
-            {selected.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-xl bg-highland-50 p-3">
-                <span className="font-semibold text-highland-900">{item.title}</span>
-                {item.maps_url && <a href={item.maps_url} target="_blank" rel="noreferrer" aria-label="Obrir a Maps"><ExternalLink size={18} /></a>}
+            {preview.map((activity) => (
+              <div key={activity.id} className="flex gap-3 rounded-xl bg-highland-50/60 p-3">
+                <span className="w-12 shrink-0 text-sm font-bold text-highland-700">{activity.time || '—'}</span>
+                <span className="text-sm text-gray-700">{activity.text}</span>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      <section>
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">Informació útil</h2>
-        <div className="space-y-2">
-          {practical.map((item) => (
-            <div key={item.id} className="flex gap-3 rounded-xl bg-white p-3 text-sm shadow-sm">
-              {item.key === 'telefon_emergencia' ? <Phone size={17} /> : <ShieldCheck size={17} />}
-              <span>{item.value}</span>
-            </div>
-          ))}
-          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`petrol station near ${day.base_city}, Scotland`)}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl bg-white p-3 text-sm font-semibold text-highland-700 shadow-sm">
-            <MapPinned size={17} /> Buscar benzinera pròxima
-          </a>
-        </div>
-      </section>
+      <Link
+        to={`/dia/${day.day_number}`}
+        className="flex items-center justify-between rounded-2xl border-2 border-highland-200 bg-white p-4 font-semibold text-highland-800 shadow-sm transition active:scale-[0.99]"
+      >
+        <span className="flex items-center gap-2">
+          <CalendarCheck size={20} />
+          Veure el dia complet
+        </span>
+        <ArrowRight size={18} className="text-highland-500" />
+      </Link>
+
+      <ShareWhatsAppButton day={day} />
+      </div>
     </main>
   )
 }

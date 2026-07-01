@@ -72,7 +72,7 @@ export function ReservationsPage() {
 
   if (!isSupabaseConfigured) {
     return (
-      <main className="mx-auto w-full max-w-lg flex-1 p-4">
+      <main className="safe-top mx-auto w-full max-w-lg flex-1 p-4">
         <h1 className="mb-4 text-2xl font-bold">Reservas</h1>
         <div className="rounded-2xl bg-amber-50 p-5 text-sm text-amber-900">
           Configura Supabase para activar los documentos privados.
@@ -81,11 +81,11 @@ export function ReservationsPage() {
     )
   }
 
-  if (loading) return <main className="p-6 text-center">Cargando…</main>
+  if (loading) return <main className="safe-top p-6 text-center">Cargando…</main>
 
   if (!authSession) {
     return (
-      <main className="mx-auto w-full max-w-lg flex-1 p-4">
+      <main className="safe-top mx-auto w-full max-w-lg flex-1 p-4">
         <div className="mt-8 rounded-2xl bg-white p-6 shadow-sm">
           <LockKeyhole className="mb-3 text-highland-700" size={32} />
           <h1 className="text-2xl font-bold">Reservas privadas</h1>
@@ -114,7 +114,7 @@ export function ReservationsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 p-4">
+    <main className="safe-top mx-auto w-full max-w-lg flex-1 p-4">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Reservas</h1>

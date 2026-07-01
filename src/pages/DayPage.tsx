@@ -12,7 +12,9 @@ import { SuggestionsBoard } from '../components/SuggestionsBoard'
 import { IdeasBoard } from '../components/IdeasBoard'
 import { ShareWhatsAppButton } from '../components/ShareWhatsAppButton'
 import { WeatherCard } from '../components/WeatherCard'
+import { PhotoHero } from '../components/PhotoHero'
 import { dayRoute } from '../lib/maps'
+import { dayPhoto, heroTint } from '../lib/dayTheme'
 
 export function DayPage() {
   const { dayNum } = useParams<{ dayNum: string }>()
@@ -53,35 +55,52 @@ export function DayPage() {
     : null
   const route = dayRoute(day.day_number)
   const isSkyeDay = day.day_number === 4 || day.day_number === 5
+  const photo = dayPhoto(day)
 
   return (
-    <div className="safe-top">
-      <header className="sticky top-0 z-40 bg-highland-50/95 backdrop-blur border-b border-highland-100 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dies')} className="rounded-full p-2 hover:bg-highland-100" aria-label="Tornar">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex-1">
-            <h1 className="font-display text-lg font-bold text-highland-800">Dia {day.day_number}</h1>
-            <p className="text-sm text-gray-500">{day.label}</p>
+    <div>
+      <PhotoHero
+        photo={photo.url}
+        alt={photo.label}
+        tint={heroTint(day)}
+        className="sticky top-0 z-40 rounded-none shadow-md"
+        minHeight="9.5rem"
+      >
+        <div className="hero-safe-padding flex min-h-[9.5rem] flex-col justify-between p-4 pb-3 text-white">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/dies')}
+              className="rounded-full bg-black/25 p-2 hover:bg-black/40"
+              aria-label="Tornar"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-lg font-bold leading-tight">Dia {day.day_number}</p>
+              <p className="truncate text-sm text-white/75">{day.label}</p>
+            </div>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${DAY_TYPE_COLORS[day.type]}`}>
+              {DAY_TYPE_LABELS[day.type]}
+            </span>
           </div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${DAY_TYPE_COLORS[day.type]}`}>
-            {DAY_TYPE_LABELS[day.type]}
-          </span>
+
+          <h1 className="font-display text-2xl font-bold leading-tight">{day.base_city}</h1>
+
+          <div className="flex justify-between text-sm text-white/80">
+            {prev ? (
+              <button type="button" onClick={() => navigate(`/dia/${prev.day_number}`)} className="flex items-center gap-1">
+                <ChevronLeft size={16} /> Dia {prev.day_number}
+              </button>
+            ) : <span />}
+            {next ? (
+              <button type="button" onClick={() => navigate(`/dia/${next.day_number}`)} className="flex items-center gap-1">
+                Dia {next.day_number} <ChevronRight size={16} />
+              </button>
+            ) : <span />}
+          </div>
         </div>
-        <div className="mt-2 flex justify-between">
-          {prev ? (
-            <button onClick={() => navigate(`/dia/${prev.day_number}`)} className="flex items-center gap-1 text-sm text-highland-600">
-              <ChevronLeft size={16} /> Dia {prev.day_number}
-            </button>
-          ) : <span />}
-          {next ? (
-            <button onClick={() => navigate(`/dia/${next.day_number}`)} className="flex items-center gap-1 text-sm text-highland-600">
-              Dia {next.day_number} <ChevronRight size={16} />
-            </button>
-          ) : <span />}
-        </div>
-      </header>
+      </PhotoHero>
 
       <div className="space-y-6 p-4">
         <WeatherCard day={day} />
@@ -98,7 +117,6 @@ export function DayPage() {
           </a>
         )}
         <div className="rounded-2xl bg-white p-4 shadow-sm border border-highland-100">
-          <p className="text-2xl font-bold text-highland-800">{day.base_city}</p>
           <div className="mt-2 flex items-start gap-2">
             <Bed size={16} className="mt-0.5 shrink-0 text-highland-500" />
             {editingLodging ? (

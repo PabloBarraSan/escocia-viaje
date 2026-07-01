@@ -20,6 +20,11 @@ import type {
   Trip, Day, TripInfo, Idea, ChecklistItem, Suggestion, SuggestionCategory,
   SuggestionStatus, Expense,
 } from '../lib/types'
+import { sortActivities, sortOrderForNewActivity } from '../lib/activities'
+import {
+  fetchCompanionTable,
+  isCompanionTableEnabled,
+} from '../lib/supabaseFeatures'
 
 const REMOTE_CACHE_KEY = 'escocia_remote_cache'
 
@@ -65,9 +70,7 @@ export function useTrip(code: string) {
 
     const enriched: Day[] = (daysData ?? []).map((day) => ({
       ...day,
-      activities: (activitiesData ?? [])
-        .filter((a) => a.day_id === day.id)
-        .sort((a, b) => a.sort_order - b.sort_order),
+      activities: sortActivities((activitiesData ?? []).filter((a) => a.day_id === day.id)),
       note: (notesData ?? []).find((n) => n.day_id === day.id),
     }))
     setDays(enriched)
@@ -95,19 +98,29 @@ export function useTrip(code: string) {
 
     setChecklist(checklistData ?? [])
 
-    const { data: suggestionsData } = await sb
-      .from('suggestions')
-      .select('*')
-      .eq('trip_id', tripData.id)
-      .order('created_at', { ascending: false })
-    setSuggestions(suggestionsData ?? [])
+    let nextSuggestions: Suggestion[] = []
+    if (isCompanionTableEnabled('suggestions')) {
+      nextSuggestions = await fetchCompanionTable('suggestions', () =>
+        sb.from('suggestions')
+          .select('*')
+          .eq('trip_id', tripData.id)
+          .order('created_at', { ascending: false })
+          .then((result) => result),
+      )
+    }
+    setSuggestions(nextSuggestions)
 
-    const { data: expensesData } = await sb
-      .from('expenses')
-      .select('*')
-      .eq('trip_id', tripData.id)
-      .order('created_at', { ascending: false })
-    setExpenses(expensesData ?? [])
+    let nextExpenses: Expense[] = []
+    if (isCompanionTableEnabled('expenses')) {
+      nextExpenses = await fetchCompanionTable('expenses', () =>
+        sb.from('expenses')
+          .select('*')
+          .eq('trip_id', tripData.id)
+          .order('created_at', { ascending: false })
+          .then((result) => result),
+      )
+    }
+    setExpenses(nextExpenses)
 
     localStorage.setItem(REMOTE_CACHE_KEY, JSON.stringify({
       trip: tripData,
@@ -115,8 +128,8 @@ export function useTrip(code: string) {
       tripInfo: infoData ?? [],
       ideas: ideasData ?? [],
       checklist: checklistData ?? [],
-      suggestions: suggestionsData ?? [],
-      expenses: expensesData ?? [],
+      suggestions: nextSuggestions,
+      expenses: nextExpenses,
     }))
   }, [code])
 
@@ -177,9 +190,15 @@ export function useTrip(code: string) {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_info' }, () => reload())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas' }, () => reload())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist_items' }, () => reload())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'suggestions' }, () => reload())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => reload())
-        .subscribe()
+
+      if (isCompanionTableEnabled('suggestions')) {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table: 'suggestions' }, () => reload())
+      }
+      if (isCompanionTableEnabled('expenses')) {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => reload())
+      }
+
+      channel.subscribe()
       return () => { sb.removeChannel(channel) }
     } else {
       return subscribeLocal(() => { reload() })
@@ -197,10 +216,12 @@ export function useTrip(code: string) {
       if (updateError) throw updateError
       setDays((current) => current.map((day) => ({
         ...day,
-        activities: day.activities?.map((activity) =>
-          activity.id === id
-            ? { ...activity, ...updates, updated_by: user, updated_at: updatedAt }
-            : activity,
+        activities: sortActivities(
+          (day.activities ?? []).map((activity) =>
+            activity.id === id
+              ? { ...activity, ...updates, updated_by: user, updated_at: updatedAt }
+              : activity,
+          ),
         ),
       })))
     } else {
@@ -211,17 +232,17 @@ export function useTrip(code: string) {
   const addActivity = async (dayId: string, text: string, time: string, user: string) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
-      const { data: existing } = await sb.from('activities').select('sort_order').eq('day_id', dayId)
-      const maxOrder = Math.max(0, ...(existing ?? []).map((a) => a.sort_order))
+      const { data: existing } = await sb.from('activities').select('*').eq('day_id', dayId)
+      const sortOrder = sortOrderForNewActivity(existing ?? [], time || null)
       const { data: created, error: insertError } = await sb
         .from('activities')
-        .insert({ day_id: dayId, text, time, sort_order: maxOrder + 1, updated_by: user })
+        .insert({ day_id: dayId, text, time: time || null, sort_order: sortOrder, updated_by: user })
         .select('*')
         .single()
       if (insertError) throw insertError
       setDays((current) => current.map((day) =>
         day.id === dayId
-          ? { ...day, activities: [...(day.activities ?? []), created] }
+          ? { ...day, activities: sortActivities([...(day.activities ?? []), created]) }
           : day,
       ))
     } else {
@@ -340,6 +361,9 @@ export function useTrip(code: string) {
     author: string
   }) => {
     if (!trip || !isSupabaseConfigured) return
+    if (!isCompanionTableEnabled('suggestions')) {
+      throw new Error('Cal executar la migració 003 a Supabase per usar suggeriments')
+    }
     const { error } = await getSupabase().from('suggestions').insert({
       trip_id: trip.id,
       day_id: input.dayId,
@@ -386,6 +410,9 @@ export function useTrip(code: string) {
     participants: string[]
   }) => {
     if (!trip || !isSupabaseConfigured) return
+    if (!isCompanionTableEnabled('expenses')) {
+      throw new Error('Cal executar la migració 003 a Supabase per usar despeses')
+    }
     const { error } = await getSupabase().from('expenses').insert({
       trip_id: trip.id,
       day_id: input.dayId || null,

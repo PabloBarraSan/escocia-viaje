@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../hooks/useSession'
 import { TRIP_CODE } from '../lib/types'
-import { Mountain } from 'lucide-react'
+import { LOGIN_PHOTO } from '../lib/dayTheme'
 
 export function LoginPage() {
   const { login } = useSession()
@@ -26,14 +26,19 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-gradient-to-b from-highland-800 to-highland-900 px-6 safe-top safe-bottom">
-      <div className="mb-8 text-center text-white">
-        <Mountain size={48} className="mx-auto mb-4 text-highland-200" />
-        <h1 className="text-3xl font-bold">Nova Ruta Escòcia</h1>
-        <p className="mt-2 text-highland-200">5 – 12 juliol 2026</p>
+    <div
+      className="relative flex min-h-full flex-col items-center justify-center bg-cover bg-center px-6 safe-top safe-bottom"
+      style={{ backgroundImage: `url(${LOGIN_PHOTO})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-highland-950/80 via-highland-900/75 to-highland-950/90" />
+
+      <div className="relative z-10 mb-8 text-center text-white">
+        <h1 className="font-display text-4xl font-bold">Nova Ruta Escòcia</h1>
+        <p className="mt-2 text-highland-100">5 – 12 juliol 2026</p>
+        <p className="mt-3 text-sm text-white/60">Glencoe · Skye · Edimburg</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-xl">
+      <form onSubmit={handleSubmit} className="relative z-10 w-full max-w-sm space-y-4 rounded-2xl bg-white/95 p-6 shadow-2xl backdrop-blur">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">El teu nom</label>
           <input

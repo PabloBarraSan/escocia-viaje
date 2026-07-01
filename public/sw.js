@@ -1,8 +1,13 @@
-const CACHE = 'escocia-shell-v1'
-const APP_SHELL = ['/', '/manifest.json', '/icon.svg', '/favicon.svg']
+const CACHE = 'escocia-shell-v3'
+const APP_SHELL = ['/', '/manifest.json', '/icon.svg']
+const IMAGES = [
+  '/images/day-1.jpg', '/images/day-2.jpg', '/images/day-3.jpg', '/images/day-4.jpg',
+  '/images/day-5.jpg', '/images/day-6.jpg', '/images/day-7.jpg', '/images/day-8.jpg',
+  '/images/login.jpg',
+]
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)))
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([...APP_SHELL, ...IMAGES])))
   self.skipWaiting()
 })
 
