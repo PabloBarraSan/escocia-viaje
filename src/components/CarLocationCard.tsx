@@ -56,10 +56,15 @@ export function CarLocationCard({ compact = false }: { compact?: boolean }) {
     : null
 
   return (
-    <section className={`rounded-2xl ${compact ? 'bg-white p-4 shadow-sm' : 'bg-amber-50 p-4'}`}>
-      <div className="flex items-center gap-2">
-        <CarFront size={20} className="text-amber-700" />
-        <h2 className="font-bold text-gray-900">On està el cotxe?</h2>
+    <section className={`rounded-2xl border border-highland-100 bg-white shadow-sm ${compact ? 'p-4' : 'bg-amber-50 p-4'}`}>
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800">
+          <CarFront size={20} />
+        </span>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Cotxe</p>
+          <h2 className="font-semibold text-highland-900">On està aparcat?</h2>
+        </div>
       </div>
       {location ? (
         <>

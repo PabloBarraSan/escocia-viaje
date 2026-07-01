@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Check, ExternalLink, MapPinned, Plus, ThumbsUp, Utensils, X } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
+import { daySearchLocation } from '../lib/googlePlaces'
 import type { Day, SuggestionCategory } from '../lib/types'
+import { PlaceAutocomplete } from './PlaceAutocomplete'
 
 const CATEGORIES: Array<{ value: SuggestionCategory; label: string; emoji: string }> = [
   { value: 'comer', label: 'Menjar', emoji: '🍽️' },
@@ -121,11 +123,18 @@ export function SuggestionsBoard({ day }: { day: Day }) {
 
       {adding ? (
         <div className="space-y-3 rounded-2xl border-2 border-dashed border-highland-200 p-4">
-          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Nom del lloc" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" autoFocus />
+          <PlaceAutocomplete
+            value={title}
+            mapsUrl={mapsUrl}
+            location={daySearchLocation(day)}
+            onChange={(nextTitle, nextMapsUrl) => {
+              setTitle(nextTitle)
+              setMapsUrl(nextMapsUrl)
+            }}
+          />
           <select value={category} onChange={(event) => setCategory(event.target.value as SuggestionCategory)} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm">
             {CATEGORIES.map((item) => <option key={item.value} value={item.value}>{item.emoji} {item.label}</option>)}
           </select>
-          <input value={mapsUrl} onChange={(event) => setMapsUrl(event.target.value)} placeholder="Enllaç de Google Maps (opcional)" type="url" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" />
           <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Per què val la pena?" rows={2} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" />
           <div className="flex gap-2">
             <button onClick={save} className="flex items-center gap-1 rounded-xl bg-highland-700 px-4 py-2 text-sm font-semibold text-white"><Utensils size={15} /> Guardar</button>

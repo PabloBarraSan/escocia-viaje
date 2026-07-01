@@ -13,7 +13,7 @@ function formatUpdated(updatedBy: string | null, updatedAt: string) {
   return `Actualitzat per ${updatedBy} ${label}`
 }
 
-function ActivityItem({ activity }: { activity: Activity }) {
+function ActivityItem({ activity, featured = false }: { activity: Activity; featured?: boolean }) {
   const { updateActivity, removeActivity } = useTripContext()
   const { session } = useSession()
   const [editing, setEditing] = useState(false)
@@ -54,14 +54,14 @@ function ActivityItem({ activity }: { activity: Activity }) {
   }
 
   return (
-    <div className="group flex items-start gap-3 rounded-xl bg-white p-3 border border-gray-100">
+    <div className={`group flex items-start gap-3 rounded-xl border border-gray-100 bg-white ${featured ? 'p-3.5' : 'p-3'}`}>
       {activity.time && (
-        <span className="shrink-0 rounded-lg bg-highland-100 px-2 py-1 text-xs font-semibold text-highland-700">
+        <span className={`shrink-0 rounded-lg bg-highland-100 font-bold text-highland-800 ${featured ? 'px-2.5 py-1.5 text-sm' : 'px-2 py-1 text-xs font-semibold text-highland-700'}`}>
           {activity.time}
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-gray-800">{activity.text}</p>
+        <p className={featured ? 'text-base leading-snug text-gray-900' : 'text-sm text-gray-800'}>{activity.text}</p>
         {formatUpdated(activity.updated_by, activity.updated_at) && (
           <p className="mt-1 text-[10px] text-gray-400">{formatUpdated(activity.updated_by, activity.updated_at)}</p>
         )}
@@ -82,7 +82,17 @@ function ActivityItem({ activity }: { activity: Activity }) {
   )
 }
 
-export function ActivityList({ dayId, activities }: { dayId: string; activities: Activity[] }) {
+export function ActivityList({
+  dayId,
+  activities,
+  featured = false,
+  count,
+}: {
+  dayId: string
+  activities: Activity[]
+  featured?: boolean
+  count?: number
+}) {
   const { addActivity } = useTripContext()
   const { session } = useSession()
   const [adding, setAdding] = useState(false)
@@ -98,12 +108,12 @@ export function ActivityList({ dayId, activities }: { dayId: string; activities:
   }
 
   const sorted = sortActivities(activities)
+  const total = count ?? sorted.length
 
-  return (
+  const list = (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Activitats</h3>
       {sorted.map((a) => (
-        <ActivityItem key={a.id} activity={a} />
+        <ActivityItem key={a.id} activity={a} featured={featured} />
       ))}
 
       {adding ? (
@@ -131,11 +141,35 @@ export function ActivityList({ dayId, activities }: { dayId: string; activities:
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-highland-200 py-3 text-sm font-medium text-highland-600 hover:border-highland-400 hover:bg-highland-50"
+          className={`flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed py-3 text-sm font-medium text-highland-600 hover:border-highland-400 hover:bg-highland-50 ${featured ? 'border-highland-200' : 'border-highland-200'}`}
         >
           <Plus size={16} /> Afegir activitat
         </button>
       )}
+    </div>
+  )
+
+  if (featured) {
+    return (
+      <section className="rounded-2xl border border-highland-200 bg-white p-4 shadow-sm ring-1 ring-highland-100/80">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-highland-600">Pla del dia</p>
+            <h2 className="font-display text-2xl font-bold text-highland-900">Itinerari</h2>
+          </div>
+          <span className="rounded-full bg-highland-50 px-2.5 py-1 text-xs font-semibold text-highland-700">
+            {total} {total === 1 ? 'activitat' : 'activitats'}
+          </span>
+        </div>
+        {list}
+      </section>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Activitats</h3>
+      {list}
     </div>
   )
 }

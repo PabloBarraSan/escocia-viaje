@@ -37,6 +37,20 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_...
 
 5. Reinicia `npm run dev`
 
+## Google Places (autocompletar suggeriments)
+
+1. A Google Cloud, activa **Places API (New)** al projecte
+2. Crea una API key restringida per domini (`localhost` + la URL de Vercel)
+3. Afegeix al `.env`:
+
+```
+VITE_GOOGLE_PLACES_API_KEY=AIza...
+```
+
+4. Reinicia `npm run dev` i prova **Proposar un lloc** en un dia
+
+Sense aquesta variable, el formulari segueix funcionant en mode manual.
+
 ## Accés
 
 - **Codi del viatge:** `ESCOCIA2026`

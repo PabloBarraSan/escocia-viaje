@@ -104,8 +104,7 @@ export function useTrip(code: string) {
         sb.from('suggestions')
           .select('*')
           .eq('trip_id', tripData.id)
-          .order('created_at', { ascending: false })
-          .then((result) => result),
+          .order('created_at', { ascending: false }),
       )
     }
     setSuggestions(nextSuggestions)
@@ -116,8 +115,7 @@ export function useTrip(code: string) {
         sb.from('expenses')
           .select('*')
           .eq('trip_id', tripData.id)
-          .order('created_at', { ascending: false })
-          .then((result) => result),
+          .order('created_at', { ascending: false }),
       )
     }
     setExpenses(nextExpenses)
