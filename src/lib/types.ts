@@ -132,3 +132,40 @@ export const MAP_STOPS = [
   { name: 'Glencoe', lat: 56.6828, lng: -5.1025, day: 7 },
   { name: 'Glasgow', lat: 55.8642, lng: -4.2518, day: 7 },
 ]
+
+export const LODGINGS_BY_DAY: Record<number, {
+  name: string
+  address: string
+  phone: string
+}> = {
+  1: {
+    name: 'Drummond Condo',
+    address: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
+    phone: '+44 7738 940365',
+  },
+  2: {
+    name: 'Drummond Condo',
+    address: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
+    phone: '+44 7738 940365',
+  },
+  4: {
+    name: 'Bayview Hostel',
+    address: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
+    phone: '+44 1471 250300',
+  },
+  5: {
+    name: 'Bayview Hostel',
+    address: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
+    phone: '+44 1471 250300',
+  },
+  6: {
+    name: '3 Bedroom Apartment - Loch Linnhe Views',
+    address: '13 Ross Place, Fort William, PH33 6JZ, United Kingdom',
+    phone: '+44 7708 008880',
+  },
+  7: {
+    name: 'JOIVY Royal Mile',
+    address: '149 Cowgate, Old Town, Edinburgh, EH1 1JT, United Kingdom',
+    phone: '+44 7506 822438',
+  },
+}

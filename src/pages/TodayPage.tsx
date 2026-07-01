@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { BedDouble, CalendarCheck, ExternalLink, MapPinned, Navigation, Phone, ShieldCheck } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
+import { LODGINGS_BY_DAY } from '../lib/types'
 
 function todayKey() {
   const date = new Date()
@@ -26,7 +27,14 @@ export function TodayPage() {
 
   const selected = suggestions.filter((item) => item.day_id === day.id && item.status === 'selected')
   const practical = tripInfo.filter((item) => ['vols', 'matricula_cotxe', 'telefon_emergencia', 'asseguranca'].includes(item.key) && item.value)
-  const lodgingRoute = day.lodging_address ? directions(day.lodging_address) : null
+  const lodgingDetails = LODGINGS_BY_DAY[day.day_number] ?? (
+    day.lodging_address ? {
+      name: day.lodging_name ?? day.lodging ?? 'Allotjament',
+      address: day.lodging_address,
+      phone: day.lodging_phone ?? '',
+    } : null
+  )
+  const lodgingRoute = lodgingDetails ? directions(lodgingDetails.address) : null
 
   return (
     <main className="safe-top space-y-5 p-4">
@@ -51,8 +59,8 @@ export function TodayPage() {
         <section className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500"><BedDouble size={16} /> Aquesta nit</h2>
           <p className="mt-2 font-semibold text-highland-900">{day.lodging}</p>
-          {day.lodging_name && <p className="mt-1 text-sm font-semibold text-highland-700">{day.lodging_name}</p>}
-          {day.lodging_address && <p className="mt-1 text-sm text-gray-500">{day.lodging_address}</p>}
+          {lodgingDetails?.name && <p className="mt-1 text-sm font-semibold text-highland-700">{lodgingDetails.name}</p>}
+          {lodgingDetails?.address && <p className="mt-1 text-sm text-gray-500">{lodgingDetails.address}</p>}
           {lodgingRoute && (
             <a href={lodgingRoute} target="_blank" rel="noreferrer" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-highland-700 px-3 py-2 text-sm font-semibold text-white">
               <Navigation size={16} /> Anar a l’allotjament
