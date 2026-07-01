@@ -290,6 +290,19 @@ export function useTrip(code: string) {
     }
   }
 
+  const saveTripInfoByKey = async (key: string, value: string, user: string) => {
+    if (!trip || !isSupabaseConfigured) return
+    const { error } = await getSupabase().from('trip_info').upsert({
+      trip_id: trip.id,
+      key,
+      value,
+      updated_by: user,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'trip_id,key' })
+    if (error) throw error
+    await reload()
+  }
+
   const createSuggestion = async (input: {
     dayId: string
     title: string
@@ -381,6 +394,7 @@ export function useTrip(code: string) {
     updateDay,
     saveNote,
     saveTripInfo,
+    saveTripInfoByKey,
     createIdea,
     voteIdea,
     createChecklistItem,

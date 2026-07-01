@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 import L from 'leaflet'
 import { MAP_STOPS } from '../lib/types'
+import { CarLocationCard } from '../components/CarLocationCard'
 
 function numberedIcon(number: number) {
   return L.divIcon({
@@ -28,6 +29,9 @@ export function MapPage() {
         <h1 className="text-xl font-bold text-highland-800">Mapa del viatge</h1>
         <p className="text-sm text-gray-500">Segueix els números per veure l’ordre de la ruta</p>
       </header>
+      <div className="px-4 pb-3">
+        <CarLocationCard compact />
+      </div>
 
       <div className="flex-1 px-4 pb-4">
         <MapContainer

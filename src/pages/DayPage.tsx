@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft, ChevronRight, Bed, MapPinned, Phone } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Bed, MapPinned, Navigation, Phone } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { ActivityList } from '../components/ActivityList'
@@ -8,6 +8,7 @@ import { NotesPanel } from '../components/NotesPanel'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS, LODGINGS_BY_DAY } from '../lib/types'
 import { SuggestionsBoard } from '../components/SuggestionsBoard'
 import { WeatherCard } from '../components/WeatherCard'
+import { dayRoute } from '../lib/maps'
 
 export function DayPage() {
   const { dayNum } = useParams<{ dayNum: string }>()
@@ -46,6 +47,7 @@ export function DayPage() {
   const lodgingDirections = lodgingDetails
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lodgingDetails.address)}&travelmode=driving`
     : null
+  const route = dayRoute(day.day_number)
 
   return (
     <div className="safe-top">
@@ -78,6 +80,17 @@ export function DayPage() {
 
       <div className="space-y-6 p-4">
         <WeatherCard day={day} />
+        {route && (
+          <a href={route.url} target="_blank" rel="noreferrer" className="block rounded-2xl bg-highland-800 p-4 text-white shadow-sm">
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-highland-200">
+              <Navigation size={16} /> Ruta completa del dia
+            </p>
+            <p className="mt-1 text-lg font-bold">{route.label}</p>
+            <p className="mt-1 text-xs text-highland-200">
+              {route.stops.length} {route.stops.length === 1 ? 'destí' : 'parades'} · Obrir a Google Maps
+            </p>
+          </a>
+        )}
         <div className="rounded-2xl bg-white p-4 shadow-sm border border-highland-100">
           <p className="text-2xl font-bold text-highland-800">{day.base_city}</p>
           <div className="mt-2 flex items-start gap-2">

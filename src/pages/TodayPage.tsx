@@ -4,6 +4,8 @@ import { useTripContext } from '../context/TripContext'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import type { Day } from '../lib/types'
 import { WeatherCard } from '../components/WeatherCard'
+import { dayRoute } from '../lib/maps'
+import { CarLocationCard } from '../components/CarLocationCard'
 
 function todayKey() {
   const date = new Date()
@@ -84,6 +86,7 @@ export function TodayPage() {
   )
   const lodgingRoute = lodgingDetails ? directions(lodgingDetails.address) : null
   const upcoming = nextMoment(days)
+  const route = dayRoute(day.day_number)
 
   return (
     <main className="safe-top space-y-5 p-4">
@@ -121,10 +124,11 @@ export function TodayPage() {
       )}
 
       <WeatherCard day={day} compact />
+      <CarLocationCard compact />
 
       <div className="grid grid-cols-2 gap-3">
-        <a href={directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
-          <Navigation size={19} /> Com arribar
+        <a href={route?.url ?? directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
+          <Navigation size={19} /> Ruta del dia
         </a>
         <Link to={`/dia/${day.day_number}`} className="flex items-center justify-center gap-2 rounded-2xl bg-white p-4 font-semibold text-highland-800 shadow-sm">
           <CalendarCheck size={19} /> Veure dia
