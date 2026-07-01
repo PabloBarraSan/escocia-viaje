@@ -25,13 +25,15 @@ Per defecte funciona en **mode local** (dades a localStorage) sense configurar S
 2. Al **SQL Editor**, executa en ordre:
    - `supabase/migrations/001_schema.sql`
    - `supabase/seed.sql`
-3. A **Project Settings → API**, copia URL i `anon` key
-4. Crea `.env` a l'arrel:
+3. A **Project Settings → API**, copia URL i la clau **publishable** (`sb_publishable_...`) o `anon` legacy (`eyJhbG...`)
+4. Crea `.env` a l'arrel (veure `.env.example`):
 
 ```
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbG...
+VITE_SUPABASE_URL=https://ayyrixmqmevubmwmpuey.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_...
 ```
+
+**No** facis servir la `secret key` (`sb_secret_...`) al frontend ni a Vercel.
 
 5. Reinicia `npm run dev`
 
