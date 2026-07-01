@@ -5,6 +5,7 @@ import { TimelinePage } from './pages/TimelinePage'
 import { DayPage } from './pages/DayPage'
 import { MapPage } from './pages/MapPage'
 import { SummaryPage } from './pages/SummaryPage'
+import { ReservationsPage } from './pages/ReservationsPage'
 import { Layout } from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/dia/:dayNum" element={<DayPage />} />
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/resum" element={<SummaryPage />} />
+          <Route path="/reservas" element={<ReservationsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

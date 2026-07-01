@@ -58,3 +58,11 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_...
 - Resum d'allotjaments i cotxe (editable)
 - Checklist compartida
 - Idees per a Skye amb vots
+- Reserves en PDF protegides amb accés per correu
+
+## Documents privats
+
+1. Executa `supabase/migrations/002_private_reservations.sql` al SQL Editor.
+2. Substitueix els cinc correus d'exemple pels correus de la família.
+3. A Supabase Storage, obri el bucket privat `reservas`.
+4. Puja els PDF des del panell. No els afegis mai al repositori Git.

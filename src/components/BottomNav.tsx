@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, Map, ClipboardList } from 'lucide-react'
+import { Calendar, Map, ClipboardList, FileLock2 } from 'lucide-react'
 
 export function BottomNav() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -21,6 +21,10 @@ export function BottomNav() {
         <NavLink to="/resum" className={linkClass}>
           <ClipboardList size={22} />
           Resum
+        </NavLink>
+        <NavLink to="/reservas" className={linkClass}>
+          <FileLock2 size={22} />
+          Reservas
         </NavLink>
       </div>
     </nav>
