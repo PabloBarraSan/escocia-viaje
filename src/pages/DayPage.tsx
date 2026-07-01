@@ -1,28 +1,41 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, Bed, ChevronLeft, ChevronRight, ExternalLink, MapPinned, Navigation, Phone,
 } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
-import { ActivityList } from '../components/ActivityList'
 import { NotesPanel } from '../components/NotesPanel'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS, LODGINGS_BY_DAY } from '../lib/types'
 import { SuggestionsBoard } from '../components/SuggestionsBoard'
 import { IdeasBoard } from '../components/IdeasBoard'
 import { WeatherCard } from '../components/WeatherCard'
 import { PhotoHero } from '../components/PhotoHero'
-import { PageSection } from '../components/PageSection'
+import { DayTabs, type DayTab } from '../components/DayTabs'
+import { DayTimeline } from '../components/DayTimeline'
+import { DayChat } from '../components/DayChat'
+import { CarLocationCard } from '../components/CarLocationCard'
 import { dayRoute } from '../lib/maps'
 import { dayPhoto, heroTint } from '../lib/dayTheme'
+
+function parseTab(value: string | null): DayTab {
+  if (value === 'practic' || value === 'grup') return value
+  return 'horari'
+}
 
 export function DayPage() {
   const { dayNum } = useParams<{ dayNum: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { days, updateDay } = useTripContext()
   const { session } = useSession()
   const [editingLodging, setEditingLodging] = useState(false)
   const [lodging, setLodging] = useState('')
+  const tab = parseTab(searchParams.get('tab'))
+
+  const setTab = (next: DayTab) => {
+    setSearchParams(next === 'horari' ? {} : { tab: next }, { replace: true })
+  }
 
   const day = days.find((d) => d.day_number === Number(dayNum))
 
@@ -56,7 +69,6 @@ export function DayPage() {
   const route = dayRoute(day.day_number)
   const isSkyeDay = day.day_number === 4 || day.day_number === 5
   const photo = dayPhoto(day)
-  const activityCount = day.activities?.length ?? 0
 
   return (
     <div className="pb-6">
@@ -104,13 +116,16 @@ export function DayPage() {
         </div>
       </PhotoHero>
 
-      <main className="space-y-8 px-4 pt-5">
-        <ActivityList dayId={day.id} activities={day.activities ?? []} featured count={activityCount} />
+      <DayTabs value={tab} onChange={setTab} />
 
-        <WeatherCard day={day} />
+      <main className="space-y-5 px-4 pb-4">
+        {tab === 'horari' && (
+          <DayTimeline dayId={day.id} activities={day.activities ?? []} />
+        )}
 
-        <PageSection title="Pràctic" hint="Ruta i allotjament del dia">
-          <div className="space-y-2">
+        {tab === 'practic' && (
+          <div className="space-y-4">
+            <WeatherCard day={day} />
             {route && (
               <a
                 href={route.url}
@@ -196,32 +211,26 @@ export function DayPage() {
                 </div>
               )}
             </div>
+
+            {day.day_number >= 3 && day.day_number <= 7 && <CarLocationCard compact />}
           </div>
-        </PageSection>
+        )}
 
-        <PageSection title="Del grup" hint="Idees, llocs i apunts compartits">
-          <div className="space-y-3">
-            {isSkyeDay && <IdeasBoard />}
-
-            <details className="group rounded-2xl border border-highland-100 bg-white shadow-sm">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
-                  <span>
-                    <span className="block font-semibold text-highland-900">Suggeriments i llocs</span>
-                    <span className="block text-xs text-gray-500">Proposa restaurants, parades i activitats</span>
-                  </span>
-                  <ChevronRight size={18} className="shrink-0 text-gray-400 transition group-open:rotate-90" />
-                </summary>
-                <div className="border-t border-gray-100 p-4 pt-3">
-                  <SuggestionsBoard day={day} />
-                </div>
-            </details>
-
+        {tab === 'grup' && (
+          <div className="space-y-4">
+            <DayChat dayId={day.id} />
             <div className="rounded-2xl border border-highland-100 bg-white p-4 shadow-sm">
-                <p className="mb-3 font-semibold text-highland-900">Notes del grup</p>
-                <NotesPanel dayId={day.id} note={day.note} />
-              </div>
+              <p className="mb-3 font-semibold text-highland-900">Notes del grup</p>
+              <NotesPanel dayId={day.id} note={day.note} />
+            </div>
+            {isSkyeDay && <IdeasBoard />}
+            <div className="rounded-2xl border border-highland-100 bg-white p-4 shadow-sm">
+              <p className="mb-1 font-semibold text-highland-900">Suggeriments i llocs</p>
+              <p className="mb-3 text-xs text-gray-500">Proposa restaurants, parades i activitats</p>
+              <SuggestionsBoard day={day} />
+            </div>
           </div>
-        </PageSection>
+        )}
       </main>
     </div>
   )

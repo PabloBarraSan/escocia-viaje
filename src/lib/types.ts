@@ -33,9 +33,18 @@ export interface Activity {
   day_id: string
   time: string | null
   text: string
+  duration_minutes: number | null
   sort_order: number
   updated_by: string | null
   updated_at: string
+}
+
+export interface DayMessage {
+  id: string
+  day_id: string
+  author: string
+  text: string
+  created_at: string
 }
 
 export interface DayNote {

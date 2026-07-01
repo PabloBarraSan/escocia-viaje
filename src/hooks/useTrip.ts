@@ -15,10 +15,11 @@ import {
   addLocalChecklistItem,
   toggleLocalChecklist,
   deleteLocalChecklist,
+  addLocalDayMessage,
 } from '../lib/localStore'
 import type {
   Trip, Day, TripInfo, Idea, ChecklistItem, Suggestion, SuggestionCategory,
-  SuggestionStatus, Expense,
+  SuggestionStatus, Expense, DayMessage,
 } from '../lib/types'
 import { sortActivities, sortOrderForNewActivity } from '../lib/activities'
 import {
@@ -36,6 +37,7 @@ export function useTrip(code: string) {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [dayMessages, setDayMessages] = useState<DayMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -120,6 +122,17 @@ export function useTrip(code: string) {
     }
     setExpenses(nextExpenses)
 
+    let nextMessages: DayMessage[] = []
+    if (isCompanionTableEnabled('day_messages')) {
+      nextMessages = await fetchCompanionTable('day_messages', () =>
+        sb.from('day_messages')
+          .select('*')
+          .in('day_id', (daysData ?? []).map((day) => day.id))
+          .order('created_at', { ascending: true }),
+      )
+    }
+    setDayMessages(nextMessages)
+
     localStorage.setItem(REMOTE_CACHE_KEY, JSON.stringify({
       trip: tripData,
       days: enriched,
@@ -128,6 +141,7 @@ export function useTrip(code: string) {
       checklist: checklistData ?? [],
       suggestions: nextSuggestions,
       expenses: nextExpenses,
+      dayMessages: nextMessages,
     }))
   }, [code])
 
@@ -140,6 +154,7 @@ export function useTrip(code: string) {
     setChecklist(data.checklist)
     setSuggestions([])
     setExpenses([])
+    setDayMessages(data.messages ?? [])
   }, [code])
 
   const reload = useCallback(async () => {
@@ -161,6 +176,7 @@ export function useTrip(code: string) {
           setChecklist(cached.checklist)
           setSuggestions(cached.suggestions ?? [])
           setExpenses(cached.expenses ?? [])
+          setDayMessages(cached.dayMessages ?? [])
           setError(null)
         } catch {
           setError(e instanceof Error ? e.message : 'Error carregant el viatge')
@@ -195,6 +211,9 @@ export function useTrip(code: string) {
       if (isCompanionTableEnabled('expenses')) {
         channel.on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => reload())
       }
+      if (isCompanionTableEnabled('day_messages')) {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table: 'day_messages' }, () => reload())
+      }
 
       channel.subscribe()
       return () => { sb.removeChannel(channel) }
@@ -203,7 +222,11 @@ export function useTrip(code: string) {
     }
   }, [reload])
 
-  const updateActivity = async (id: string, updates: { time?: string; text?: string }, user: string) => {
+  const updateActivity = async (
+    id: string,
+    updates: { time?: string; text?: string; duration_minutes?: number | null },
+    user: string,
+  ) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
       const updatedAt = new Date().toISOString()
@@ -227,14 +250,27 @@ export function useTrip(code: string) {
     }
   }
 
-  const addActivity = async (dayId: string, text: string, time: string, user: string) => {
+  const addActivity = async (
+    dayId: string,
+    text: string,
+    time: string,
+    user: string,
+    durationMinutes: number | null = null,
+  ) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
       const { data: existing } = await sb.from('activities').select('*').eq('day_id', dayId)
       const sortOrder = sortOrderForNewActivity(existing ?? [], time || null)
       const { data: created, error: insertError } = await sb
         .from('activities')
-        .insert({ day_id: dayId, text, time: time || null, sort_order: sortOrder, updated_by: user })
+        .insert({
+          day_id: dayId,
+          text,
+          time: time || null,
+          duration_minutes: durationMinutes,
+          sort_order: sortOrder,
+          updated_by: user,
+        })
         .select('*')
         .single()
       if (insertError) throw insertError
@@ -244,7 +280,7 @@ export function useTrip(code: string) {
           : day,
       ))
     } else {
-      await addLocalActivity(dayId, text, time, user)
+      await addLocalActivity(dayId, text, time, user, durationMinutes)
     }
   }
 
@@ -430,6 +466,25 @@ export function useTrip(code: string) {
     await reload()
   }
 
+  const sendDayMessage = async (dayId: string, text: string, author: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    if (isSupabaseConfigured) {
+      if (!isCompanionTableEnabled('day_messages')) {
+        throw new Error('Cal executar la migració 004 a Supabase per usar el xat del dia')
+      }
+      const { error } = await getSupabase().from('day_messages').insert({
+        day_id: dayId,
+        author,
+        text: trimmed,
+      })
+      if (error) throw error
+      await reload()
+    } else {
+      await addLocalDayMessage(dayId, trimmed, author)
+    }
+  }
+
   return {
     trip,
     days,
@@ -438,6 +493,7 @@ export function useTrip(code: string) {
     checklist,
     suggestions,
     expenses,
+    dayMessages,
     loading,
     error,
     isLocalMode: !isSupabaseConfigured,
@@ -459,5 +515,6 @@ export function useTrip(code: string) {
     addSuggestionToItinerary,
     createExpense,
     removeExpense,
+    sendDayMessage,
   }
 }

@@ -37,6 +37,8 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_...
 
 5. Reinicia `npm run dev`
 
+6. Opcional: executa `supabase/migrations/004_day_schedule_and_chat.sql` per duració d’activitats i xat per dia.
+
 ## Google Places (autocompletar suggeriments)
 
 1. A Google Cloud, activa **Places API (New)** al projecte

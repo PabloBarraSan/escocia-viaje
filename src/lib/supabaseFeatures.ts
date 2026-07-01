@@ -1,20 +1,21 @@
 const FEATURES_KEY = 'escocia_supabase_features'
 
-export type CompanionTables = 'suggestions' | 'expenses'
+export type CompanionTables = 'suggestions' | 'expenses' | 'day_messages'
 
 type FeatureFlags = Record<CompanionTables, boolean | null>
 
 function readFlags(): FeatureFlags {
   try {
     const raw = localStorage.getItem(FEATURES_KEY)
-    if (!raw) return { suggestions: null, expenses: null }
+    if (!raw) return { suggestions: null, expenses: null, day_messages: null }
     const parsed = JSON.parse(raw) as Partial<FeatureFlags>
     return {
       suggestions: parsed.suggestions ?? null,
       expenses: parsed.expenses ?? null,
+      day_messages: parsed.day_messages ?? null,
     }
   } catch {
-    return { suggestions: null, expenses: null }
+    return { suggestions: null, expenses: null, day_messages: null }
   }
 }
 

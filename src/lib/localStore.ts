@@ -1,4 +1,4 @@
-import type { Trip, Day, Activity, DayNote, TripInfo, Idea, ChecklistItem } from './types'
+import type { Trip, Day, Activity, DayNote, DayMessage, TripInfo, Idea, ChecklistItem } from './types'
 import { sortActivities, sortOrderForNewActivity } from './activities'
 import { TRIP_CODE } from './types'
 
@@ -9,6 +9,7 @@ const SEED: {
   days: Day[]
   activities: Activity[]
   notes: DayNote[]
+  messages: DayMessage[]
   tripInfo: TripInfo[]
   ideas: Idea[]
   checklist: ChecklistItem[]
@@ -32,30 +33,31 @@ const SEED: {
     { id: 'd8', trip_id: 'local-trip', day_number: 8, date: '2026-07-12', label: 'Diumenge 12 juliol', base_city: 'Edimburg', type: 'city', lodging: 'Vol de tornada 19:00h', lat: 55.9533, lng: -3.1883, sort_order: 8, updated_by: null, updated_at: '' },
   ],
   activities: [
-    { id: 'a1', day_id: 'd1', time: '12:00', text: 'Arribada a Edimburg a migdia', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a2', day_id: 'd1', time: '20:00', text: "Sopar prompte en un pub d'Edimburg", sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a3', day_id: 'd2', time: '10:00', text: "Visitar els llocs d'Edimburg", sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a4', day_id: 'd3', time: '09:00', text: 'Agafem el cotxe cap amunt', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a5', day_id: 'd3', time: '10:30', text: 'Parada: The Kelpies, Falkirk', sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a6', day_id: 'd3', time: '12:00', text: 'Parada: Stirling Castle', sort_order: 3, updated_by: null, updated_at: '' },
-    { id: 'a7', day_id: 'd3', time: '13:30', text: 'Parada: Perth', sort_order: 4, updated_by: null, updated_at: '' },
-    { id: 'a8', day_id: 'd3', time: '14:00', text: 'Dinar de pícnic de camí', sort_order: 5, updated_by: null, updated_at: '' },
-    { id: 'a9', day_id: 'd3', time: '18:00', text: 'Arribada a Inverness / Loch Ness', sort_order: 6, updated_by: null, updated_at: '' },
-    { id: 'a10', day_id: 'd4', time: '09:00', text: 'De camí cap a la Illa de Skye', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a11', day_id: 'd4', time: '15:00', text: 'Caminata per la vesprada', sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a12', day_id: 'd4', time: '20:00', text: 'Sopar i nit a la illa', sort_order: 3, updated_by: null, updated_at: '' },
-    { id: 'a13', day_id: 'd5', time: '10:00', text: 'Dia complet a la Illa de Skye', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a14', day_id: 'd5', time: '10:00', text: 'Rutes a peu o en cotxe — ja elegim algunes', sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a15', day_id: 'd6', time: '10:00', text: 'Anem cap a Fort William i voltants', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a16', day_id: 'd7', time: '09:00', text: 'Eixida de Fort William cap a Edimburg', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a17', day_id: 'd7', time: '11:00', text: 'Parada: Glencoe', sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a18', day_id: 'd7', time: '14:00', text: 'Parada: Glasgow', sort_order: 3, updated_by: null, updated_at: '' },
-    { id: 'a19', day_id: 'd7', time: '19:00', text: 'Sopar a Edimburg i tornar el cotxe', sort_order: 4, updated_by: null, updated_at: '' },
-    { id: 'a20', day_id: 'd8', time: '10:00', text: 'Mig dia a Edimburg', sort_order: 1, updated_by: null, updated_at: '' },
-    { id: 'a21', day_id: 'd8', time: '12:00', text: 'Esmorzar / dinar a Edimburg', sort_order: 2, updated_by: null, updated_at: '' },
-    { id: 'a22', day_id: 'd8', time: '15:00', text: "Cap a l'aeroport", sort_order: 3, updated_by: null, updated_at: '' },
-    { id: 'a23', day_id: 'd8', time: '19:00', text: 'Vol de tornada', sort_order: 4, updated_by: null, updated_at: '' },
+    { id: 'a1', day_id: 'd1', time: '12:00', text: 'Arribada a Edimburg a migdia', duration_minutes: 90, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a2', day_id: 'd1', time: '20:00', text: "Sopar prompte en un pub d'Edimburg", duration_minutes: 90, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a3', day_id: 'd2', time: '10:00', text: "Visitar els llocs d'Edimburg", duration_minutes: 480, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a4', day_id: 'd3', time: '09:00', text: 'Agafem el cotxe cap amunt', duration_minutes: 60, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a5', day_id: 'd3', time: '10:30', text: 'Parada: The Kelpies, Falkirk', duration_minutes: 45, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a6', day_id: 'd3', time: '12:00', text: 'Parada: Stirling Castle', duration_minutes: 90, sort_order: 3, updated_by: null, updated_at: '' },
+    { id: 'a7', day_id: 'd3', time: '13:30', text: 'Parada: Perth', duration_minutes: 30, sort_order: 4, updated_by: null, updated_at: '' },
+    { id: 'a8', day_id: 'd3', time: '14:00', text: 'Dinar de pícnic de camí', duration_minutes: 60, sort_order: 5, updated_by: null, updated_at: '' },
+    { id: 'a9', day_id: 'd3', time: '18:00', text: 'Arribada a Inverness / Loch Ness', duration_minutes: 60, sort_order: 6, updated_by: null, updated_at: '' },
+    { id: 'a10', day_id: 'd4', time: '09:00', text: 'De camí cap a la Illa de Skye', duration_minutes: 180, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a11', day_id: 'd4', time: '15:00', text: 'Caminata per la vesprada', duration_minutes: 120, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a12', day_id: 'd4', time: '20:00', text: 'Sopar i nit a la illa', duration_minutes: 90, sort_order: 3, updated_by: null, updated_at: '' },
+    { id: 'a13', day_id: 'd5', time: '10:00', text: 'Dia complet a la Illa de Skye', duration_minutes: 480, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a14', day_id: 'd5', time: '10:00', text: 'Rutes a peu o en cotxe — ja elegim algunes', duration_minutes: null, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a15', day_id: 'd6', time: '10:00', text: 'Anem cap a Fort William i voltants', duration_minutes: 480, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a16', day_id: 'd7', time: '09:00', text: 'Eixida de Fort William cap a Edimburg', duration_minutes: 90, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a17', day_id: 'd7', time: '11:00', text: 'Parada: Glencoe', duration_minutes: 90, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a18', day_id: 'd7', time: '14:00', text: 'Parada: Glasgow', duration_minutes: 120, sort_order: 3, updated_by: null, updated_at: '' },
+    { id: 'a19', day_id: 'd7', time: '19:00', text: 'Sopar a Edimburg i tornar el cotxe', duration_minutes: 90, sort_order: 4, updated_by: null, updated_at: '' },
+    { id: 'a20', day_id: 'd8', time: '10:00', text: 'Mig dia a Edimburg', duration_minutes: 120, sort_order: 1, updated_by: null, updated_at: '' },
+    { id: 'a21', day_id: 'd8', time: '12:00', text: 'Esmorzar / dinar a Edimburg', duration_minutes: 90, sort_order: 2, updated_by: null, updated_at: '' },
+    { id: 'a22', day_id: 'd8', time: '15:00', text: "Cap a l'aeroport", duration_minutes: 60, sort_order: 3, updated_by: null, updated_at: '' },
+    { id: 'a23', day_id: 'd8', time: '19:00', text: 'Vol de tornada', duration_minutes: 120, sort_order: 4, updated_by: null, updated_at: '' },
   ],
+  messages: [],
   notes: [
     { day_id: 'd1', text: '', updated_by: null, updated_at: '' },
     { day_id: 'd2', text: '', updated_by: null, updated_at: '' },
@@ -93,10 +95,21 @@ const SEED: {
 
 type StoreData = typeof SEED
 
+function normalize(data: Partial<StoreData> & Pick<StoreData, 'trip' | 'days' | 'activities' | 'notes' | 'tripInfo' | 'ideas' | 'checklist'>): StoreData {
+  return {
+    ...data,
+    messages: data.messages ?? [],
+    activities: data.activities.map((activity) => ({
+      ...activity,
+      duration_minutes: activity.duration_minutes ?? null,
+    })),
+  } as StoreData
+}
+
 function load(): StoreData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) return normalize(JSON.parse(raw))
   } catch { /* ignore */ }
   return structuredClone(SEED)
 }
@@ -139,7 +152,13 @@ export async function updateLocalActivity(id: string, updates: Partial<Activity>
   notify()
 }
 
-export async function addLocalActivity(dayId: string, text: string, time: string, user: string) {
+export async function addLocalActivity(
+  dayId: string,
+  text: string,
+  time: string,
+  user: string,
+  durationMinutes: number | null = null,
+) {
   const data = load()
   const dayActivities = data.activities.filter((a) => a.day_id === dayId)
   const sort_order = sortOrderForNewActivity(dayActivities, time || null)
@@ -148,9 +167,23 @@ export async function addLocalActivity(dayId: string, text: string, time: string
     day_id: dayId,
     time,
     text,
+    duration_minutes: durationMinutes,
     sort_order,
     updated_by: user,
     updated_at: new Date().toISOString(),
+  })
+  save(data)
+  notify()
+}
+
+export async function addLocalDayMessage(dayId: string, text: string, author: string) {
+  const data = load()
+  data.messages.push({
+    id: crypto.randomUUID(),
+    day_id: dayId,
+    author,
+    text: text.trim(),
+    created_at: new Date().toISOString(),
   })
   save(data)
   notify()
