@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Car, Bed, Pencil, Check, X } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
-import { IdeasBoard } from '../components/IdeasBoard'
 import { Checklist } from '../components/Checklist'
+import { ExpensesPanel } from '../components/ExpensesPanel'
+import { PendingDecisions } from '../components/PendingDecisions'
 
 const INFO_LABELS: Record<string, string> = {
   nits_edimburg: 'Nits a Edimburg',
@@ -12,6 +13,10 @@ const INFO_LABELS: Record<string, string> = {
   nits_fort_william: 'Nits a Fort William',
   cotxe: 'Lloguer de cotxe',
   ruta_cotxe: 'Rutes en cotxe',
+  vols: 'Vols',
+  matricula_cotxe: 'Matrícula i dades del cotxe',
+  telefon_emergencia: 'Contacte d’emergència',
+  asseguranca: 'Assegurança de viatge',
 }
 
 function TripInfoItem({ id, infoKey, value, updatedBy, updatedAt }: {
@@ -106,7 +111,8 @@ export function SummaryPage() {
       </div>
 
       <Checklist />
-      <IdeasBoard />
+      <PendingDecisions />
+      <ExpensesPanel />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { useSession } from '../hooks/useSession'
 import { ActivityList } from '../components/ActivityList'
 import { NotesPanel } from '../components/NotesPanel'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS } from '../lib/types'
+import { SuggestionsBoard } from '../components/SuggestionsBoard'
 
 export function DayPage() {
   const { dayNum } = useParams<{ dayNum: string }>()
@@ -90,6 +91,7 @@ export function DayPage() {
         </div>
 
         <ActivityList dayId={day.id} activities={day.activities ?? []} />
+        <SuggestionsBoard day={day} />
         <NotesPanel dayId={day.id} note={day.note} />
       </div>
     </div>

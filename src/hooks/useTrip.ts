@@ -16,7 +16,12 @@ import {
   toggleLocalChecklist,
   deleteLocalChecklist,
 } from '../lib/localStore'
-import type { Trip, Day, TripInfo, Idea, ChecklistItem } from '../lib/types'
+import type {
+  Trip, Day, TripInfo, Idea, ChecklistItem, Suggestion, SuggestionCategory,
+  SuggestionStatus, Expense,
+} from '../lib/types'
+
+const REMOTE_CACHE_KEY = 'escocia_remote_cache'
 
 export function useTrip(code: string) {
   const [trip, setTrip] = useState<Trip | null>(null)
@@ -24,6 +29,8 @@ export function useTrip(code: string) {
   const [tripInfo, setTripInfo] = useState<TripInfo[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -87,6 +94,30 @@ export function useTrip(code: string) {
       .order('sort_order')
 
     setChecklist(checklistData ?? [])
+
+    const { data: suggestionsData } = await sb
+      .from('suggestions')
+      .select('*')
+      .eq('trip_id', tripData.id)
+      .order('created_at', { ascending: false })
+    setSuggestions(suggestionsData ?? [])
+
+    const { data: expensesData } = await sb
+      .from('expenses')
+      .select('*')
+      .eq('trip_id', tripData.id)
+      .order('created_at', { ascending: false })
+    setExpenses(expensesData ?? [])
+
+    localStorage.setItem(REMOTE_CACHE_KEY, JSON.stringify({
+      trip: tripData,
+      days: enriched,
+      tripInfo: infoData ?? [],
+      ideas: ideasData ?? [],
+      checklist: checklistData ?? [],
+      suggestions: suggestionsData ?? [],
+      expenses: expensesData ?? [],
+    }))
   }, [code])
 
   const loadLocal = useCallback(async () => {
@@ -96,6 +127,8 @@ export function useTrip(code: string) {
     setTripInfo(data.tripInfo)
     setIdeas(data.ideas)
     setChecklist(data.checklist)
+    setSuggestions([])
+    setExpenses([])
   }, [code])
 
   const reload = useCallback(async () => {
@@ -107,7 +140,23 @@ export function useTrip(code: string) {
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error carregant el viatge')
+      if (isSupabaseConfigured) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(REMOTE_CACHE_KEY) ?? '')
+          setTrip(cached.trip)
+          setDays(cached.days)
+          setTripInfo(cached.tripInfo)
+          setIdeas(cached.ideas)
+          setChecklist(cached.checklist)
+          setSuggestions(cached.suggestions ?? [])
+          setExpenses(cached.expenses ?? [])
+          setError(null)
+        } catch {
+          setError(e instanceof Error ? e.message : 'Error carregant el viatge')
+        }
+      } else {
+        setError(e instanceof Error ? e.message : 'Error carregant el viatge')
+      }
     } finally {
       setLoading(false)
     }
@@ -128,6 +177,8 @@ export function useTrip(code: string) {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_info' }, () => reload())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas' }, () => reload())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist_items' }, () => reload())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'suggestions' }, () => reload())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => reload())
         .subscribe()
       return () => { sb.removeChannel(channel) }
     } else {
@@ -239,12 +290,88 @@ export function useTrip(code: string) {
     }
   }
 
+  const createSuggestion = async (input: {
+    dayId: string
+    title: string
+    category: SuggestionCategory
+    note: string
+    mapsUrl: string
+    author: string
+  }) => {
+    if (!trip || !isSupabaseConfigured) return
+    const { error } = await getSupabase().from('suggestions').insert({
+      trip_id: trip.id,
+      day_id: input.dayId,
+      title: input.title,
+      category: input.category,
+      note: input.note,
+      maps_url: input.mapsUrl || null,
+      author: input.author,
+    })
+    if (error) throw error
+    await reload()
+  }
+
+  const voteSuggestion = async (id: string, user: string) => {
+    if (!isSupabaseConfigured) return
+    const suggestion = suggestions.find((item) => item.id === id)
+    if (!suggestion) return
+    const votes = suggestion.votes.includes(user)
+      ? suggestion.votes.filter((name) => name !== user)
+      : [...suggestion.votes, user]
+    const { error } = await getSupabase().from('suggestions').update({ votes }).eq('id', id)
+    if (error) throw error
+    await reload()
+  }
+
+  const setSuggestionStatus = async (id: string, status: SuggestionStatus) => {
+    if (!isSupabaseConfigured) return
+    const { error } = await getSupabase().from('suggestions').update({ status }).eq('id', id)
+    if (error) throw error
+    await reload()
+  }
+
+  const addSuggestionToItinerary = async (suggestion: Suggestion, user: string) => {
+    if (!suggestion.day_id) return
+    await addActivity(suggestion.day_id, suggestion.title, '', user)
+    await setSuggestionStatus(suggestion.id, 'selected')
+  }
+
+  const createExpense = async (input: {
+    dayId?: string
+    description: string
+    amount: number
+    paidBy: string
+    participants: string[]
+  }) => {
+    if (!trip || !isSupabaseConfigured) return
+    const { error } = await getSupabase().from('expenses').insert({
+      trip_id: trip.id,
+      day_id: input.dayId || null,
+      description: input.description,
+      amount: input.amount,
+      paid_by: input.paidBy,
+      participants: input.participants,
+    })
+    if (error) throw error
+    await reload()
+  }
+
+  const removeExpense = async (id: string) => {
+    if (!isSupabaseConfigured) return
+    const { error } = await getSupabase().from('expenses').delete().eq('id', id)
+    if (error) throw error
+    await reload()
+  }
+
   return {
     trip,
     days,
     tripInfo,
     ideas,
     checklist,
+    suggestions,
+    expenses,
     loading,
     error,
     isLocalMode: !isSupabaseConfigured,
@@ -259,5 +386,11 @@ export function useTrip(code: string) {
     createChecklistItem,
     toggleChecklistItem,
     removeChecklistItem,
+    createSuggestion,
+    voteSuggestion,
+    setSuggestionStatus,
+    addSuggestionToItinerary,
+    createExpense,
+    removeExpense,
   }
 }

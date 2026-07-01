@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, Map, ClipboardList, FileLock2 } from 'lucide-react'
+import { Calendar, Map, ClipboardList, FileLock2, Sunrise } from 'lucide-react'
 
 export function BottomNav() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center gap-0.5 px-4 py-2 text-xs font-medium transition-colors ${
+    `flex flex-col items-center gap-0.5 px-2 py-2 text-[11px] font-medium transition-colors ${
       isActive ? 'text-highland-700' : 'text-gray-400'
     }`
 
@@ -13,6 +13,10 @@ export function BottomNav() {
         <NavLink to="/" end className={linkClass}>
           <Calendar size={22} />
           Dies
+        </NavLink>
+        <NavLink to="/avui" className={linkClass}>
+          <Sunrise size={22} />
+          Avui
         </NavLink>
         <NavLink to="/mapa" className={linkClass}>
           <Map size={22} />
@@ -24,7 +28,7 @@ export function BottomNav() {
         </NavLink>
         <NavLink to="/reservas" className={linkClass}>
           <FileLock2 size={22} />
-          Reservas
+          Reserves
         </NavLink>
       </div>
     </nav>

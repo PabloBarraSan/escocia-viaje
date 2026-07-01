@@ -71,6 +71,34 @@ export interface ChecklistItem {
   updated_at: string
 }
 
+export type SuggestionCategory = 'comer' | 'cenar' | 'cafe' | 'veure' | 'passeig' | 'compra' | 'parada'
+export type SuggestionStatus = 'proposed' | 'selected' | 'discarded'
+
+export interface Suggestion {
+  id: string
+  trip_id: string
+  day_id: string | null
+  title: string
+  category: SuggestionCategory
+  note: string
+  maps_url: string | null
+  author: string
+  votes: string[]
+  status: SuggestionStatus
+  created_at: string
+}
+
+export interface Expense {
+  id: string
+  trip_id: string
+  day_id: string | null
+  description: string
+  amount: number
+  paid_by: string
+  participants: string[]
+  created_at: string
+}
+
 export interface Session {
   name: string
   code: string
