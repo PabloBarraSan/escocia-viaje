@@ -7,6 +7,7 @@ import { ActivityList } from '../components/ActivityList'
 import { NotesPanel } from '../components/NotesPanel'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS, LODGINGS_BY_DAY } from '../lib/types'
 import { SuggestionsBoard } from '../components/SuggestionsBoard'
+import { WeatherCard } from '../components/WeatherCard'
 
 export function DayPage() {
   const { dayNum } = useParams<{ dayNum: string }>()
@@ -76,6 +77,7 @@ export function DayPage() {
       </header>
 
       <div className="space-y-6 p-4">
+        <WeatherCard day={day} />
         <div className="rounded-2xl bg-white p-4 shadow-sm border border-highland-100">
           <p className="text-2xl font-bold text-highland-800">{day.base_city}</p>
           <div className="mt-2 flex items-start gap-2">

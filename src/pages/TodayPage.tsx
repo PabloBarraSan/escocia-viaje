@@ -3,6 +3,7 @@ import { BedDouble, CalendarCheck, Clock3, ExternalLink, MapPinned, Navigation, 
 import { useTripContext } from '../context/TripContext'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import type { Day } from '../lib/types'
+import { WeatherCard } from '../components/WeatherCard'
 
 function todayKey() {
   const date = new Date()
@@ -118,6 +119,8 @@ export function TodayPage() {
           </div>
         </Link>
       )}
+
+      <WeatherCard day={day} compact />
 
       <div className="grid grid-cols-2 gap-3">
         <a href={directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
