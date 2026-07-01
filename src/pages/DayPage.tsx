@@ -76,7 +76,7 @@ export function DayPage() {
         photo={photo.url}
         alt={photo.label}
         tint={heroTint(day)}
-        className="sticky top-0 z-40 rounded-none shadow-md"
+        className="rounded-none shadow-md"
         minHeight="8.75rem"
       >
         <div className="hero-safe-padding flex min-h-[8.75rem] flex-col justify-between gap-2 p-4 pb-3 text-white">

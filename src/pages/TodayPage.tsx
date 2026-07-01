@@ -45,6 +45,7 @@ function nextMoment(days: Day[]) {
           day_id: day.id,
           time: '23:30',
           text: `Tornar a ${lodging.name}`,
+          description: '',
           duration_minutes: 30,
           sort_order: 999,
           updated_by: null,

@@ -224,7 +224,7 @@ export function useTrip(code: string) {
 
   const updateActivity = async (
     id: string,
-    updates: { time?: string; text?: string; duration_minutes?: number | null },
+    updates: { time?: string; text?: string; description?: string; duration_minutes?: number | null },
     user: string,
   ) => {
     if (isSupabaseConfigured) {
@@ -256,6 +256,7 @@ export function useTrip(code: string) {
     time: string,
     user: string,
     durationMinutes: number | null = null,
+    description = '',
   ) => {
     if (isSupabaseConfigured) {
       const sb = getSupabase()
@@ -266,6 +267,7 @@ export function useTrip(code: string) {
         .insert({
           day_id: dayId,
           text,
+          description,
           time: time || null,
           duration_minutes: durationMinutes,
           sort_order: sortOrder,
@@ -280,7 +282,7 @@ export function useTrip(code: string) {
           : day,
       ))
     } else {
-      await addLocalActivity(dayId, text, time, user, durationMinutes)
+      await addLocalActivity(dayId, text, time, user, durationMinutes, description)
     }
   }
 

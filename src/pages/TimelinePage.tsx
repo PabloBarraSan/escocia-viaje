@@ -168,7 +168,7 @@ export function TimelinePage() {
               tint={heroTint(status.day)}
               to={`/dia/${status.day.day_number}`}
               minHeight="8.75rem"
-              className="shadow-md"
+              className="rounded-2xl shadow-md"
             >
               <div className="hero-safe-padding flex min-h-[8.75rem] flex-col justify-end gap-1 p-4 pb-3 text-white">
                 <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/70">

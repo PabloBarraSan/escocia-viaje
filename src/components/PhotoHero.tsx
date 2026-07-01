@@ -19,12 +19,19 @@ type PhotoHeroProps = {
   to?: string
 }
 
+function heroSurfaceClass(className?: string) {
+  const base = 'relative overflow-hidden bg-highland-800'
+  if (!className) return `${base} rounded-3xl shadow-lg`
+  if (/\brounded-/.test(className)) return `${base} ${className}`
+  return `${base} rounded-3xl ${className}`
+}
+
 function HeroSurface({
   photo, alt, children, className, tint, minHeight,
 }: Omit<PhotoHeroProps, 'to'>) {
   return (
     <div
-      className={`relative overflow-hidden bg-highland-800 ${className ?? ''}`}
+      className={heroSurfaceClass(className)}
       style={{ minHeight }}
     >
       <img
@@ -41,7 +48,7 @@ function HeroSurface({
 }
 
 export function PhotoHero({
-  photo, alt, children, className = 'rounded-3xl shadow-lg',
+  photo, alt, children, className,
   tint = 'green', minHeight = '11rem', to,
 }: PhotoHeroProps) {
   const surface = (

@@ -8,7 +8,7 @@ const TABS: Array<{ id: DayTab; label: string }> = [
 
 export function DayTabs({ value, onChange }: { value: DayTab; onChange: (tab: DayTab) => void }) {
   return (
-    <div className="day-tabs-sticky px-4 pb-3 pt-2">
+    <div className="px-4 pb-3 pt-2">
       <div className="flex gap-1 rounded-2xl border border-highland-100 bg-white p-1 shadow-sm" role="tablist">
         {TABS.map((tab) => (
           <button

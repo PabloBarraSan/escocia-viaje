@@ -131,3 +131,20 @@ export function hourMarkers(startMinutes: number, endMinutes: number) {
   }
   return markers
 }
+
+export const TIMELINE_PX_PER_HOUR = 52
+
+export function snapMinutes(minutes: number, step = 15) {
+  return Math.round(minutes / step) * step
+}
+
+export function minuteFromTimelineY(
+  y: number,
+  layoutHeight: number,
+  startMinutes: number,
+  endMinutes: number,
+) {
+  const span = endMinutes - startMinutes
+  const ratio = Math.max(0, Math.min(1, y / Math.max(layoutHeight, 1)))
+  return snapMinutes(startMinutes + ratio * span)
+}

@@ -51,13 +51,6 @@ body {
   backdrop-filter: blur(8px);
 }
 
-.day-tabs-sticky {
-  position: sticky;
-  top: calc(env(safe-area-inset-top, 0px) + 8.75rem);
-  z-index: 35;
-  background: linear-gradient(to bottom, var(--color-highland-50) 75%, transparent);
-}
-
 html.large-text {
   font-size: 18px;
 }

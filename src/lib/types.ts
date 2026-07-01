@@ -33,6 +33,7 @@ export interface Activity {
   day_id: string
   time: string | null
   text: string
+  description: string
   duration_minutes: number | null
   sort_order: number
   updated_by: string | null
