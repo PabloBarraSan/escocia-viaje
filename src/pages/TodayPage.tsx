@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { BedDouble, CalendarCheck, ExternalLink, MapPinned, Navigation, Phone, ShieldCheck } from 'lucide-react'
+import { BedDouble, CalendarCheck, Clock3, ExternalLink, MapPinned, Navigation, Phone, ShieldCheck } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { LODGINGS_BY_DAY } from '../lib/types'
+import type { Day } from '../lib/types'
 
 function todayKey() {
   const date = new Date()
@@ -14,6 +15,52 @@ function todayKey() {
 
 function directions(destination: string) {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`
+}
+
+function nextMoment(days: Day[]) {
+  const now = new Date()
+  const moments = days.flatMap((day) => {
+    const activities = (day.activities ?? []).map((activity) => {
+      const time = activity.time || '23:59'
+      return {
+        day,
+        activity,
+        date: new Date(`${day.date}T${time}:00`),
+      }
+    })
+    const lodging = LODGINGS_BY_DAY[day.day_number]
+    if (lodging) {
+      activities.push({
+        day,
+        activity: {
+          id: `lodging-${day.id}`,
+          day_id: day.id,
+          time: '23:30',
+          text: `Tornar a ${lodging.name}`,
+          sort_order: 999,
+          updated_by: null,
+          updated_at: '',
+        },
+        date: new Date(`${day.date}T23:30:00`),
+      })
+    }
+    return activities
+  }).filter((moment) => moment.date.getTime() >= now.getTime())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+  const next = moments[0]
+  if (!next) return null
+
+  const diffMinutes = Math.max(0, Math.round((next.date.getTime() - now.getTime()) / 60_000))
+  let countdown = ''
+  if (diffMinutes < 60) countdown = diffMinutes <= 1 ? 'Ara mateix' : `En ${diffMinutes} min`
+  else if (diffMinutes < 1_440) countdown = `En ${Math.floor(diffMinutes / 60)} h`
+  else {
+    const daysLeft = Math.ceil(diffMinutes / 1_440)
+    countdown = daysLeft === 1 ? 'Demà' : `En ${daysLeft} dies`
+  }
+
+  return { ...next, countdown }
 }
 
 export function TodayPage() {
@@ -35,6 +82,7 @@ export function TodayPage() {
     } : null
   )
   const lodgingRoute = lodgingDetails ? directions(lodgingDetails.address) : null
+  const upcoming = nextMoment(days)
 
   return (
     <main className="safe-top space-y-5 p-4">
@@ -45,6 +93,31 @@ export function TodayPage() {
         <h1 className="text-3xl font-bold text-highland-900">{day.base_city}</h1>
         <p className="text-sm text-gray-500">{day.label} · Dia {day.day_number}</p>
       </header>
+
+      {upcoming && (
+        <Link
+          to={`/dia/${upcoming.day.day_number}`}
+          className="block rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-amber-950 shadow-lg"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+              <Clock3 size={16} /> Què toca ara?
+            </p>
+            <span className="rounded-full bg-white/50 px-3 py-1 text-xs font-bold">{upcoming.countdown}</span>
+          </div>
+          <div className="mt-4 flex items-start gap-4">
+            <span className="rounded-xl bg-white/60 px-3 py-2 text-lg font-black">
+              {upcoming.activity.time || '—'}
+            </span>
+            <div>
+              <h2 className="text-xl font-bold leading-tight">{upcoming.activity.text}</h2>
+              <p className="mt-1 text-sm font-medium opacity-75">
+                Dia {upcoming.day.day_number} · {upcoming.day.base_city}
+              </p>
+            </div>
+          </div>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <a href={directions(`${day.base_city}, Scotland`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-highland-700 p-4 font-semibold text-white">
