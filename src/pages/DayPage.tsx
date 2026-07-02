@@ -12,15 +12,24 @@ import { DayItineraryCard } from '../components/DayItineraryCard'
 import { CarLocationCard } from '../components/CarLocationCard'
 import { PageSection } from '../components/PageSection'
 import { dayRoute } from '../lib/maps'
+import { NextUpCard } from '../components/NextUpCard'
 
-export function DayPage() {
+function localDateKey() {
+  const date = new Date()
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+export function DayPage({ auto = false }: { auto?: boolean }) {
   const { dayNum } = useParams<{ dayNum: string }>()
   const { days, updateDay } = useTripContext()
   const { session } = useSession()
   const [editingLodging, setEditingLodging] = useState(false)
   const [lodging, setLodging] = useState('')
 
-  const day = days.find((d) => d.day_number === Number(dayNum))
+  const today = localDateKey()
+  const day = auto
+    ? days.find((item) => item.date === today) ?? days.find((item) => item.date > today) ?? days.at(-1)
+    : days.find((d) => d.day_number === Number(dayNum))
 
   if (!day) {
     return (
@@ -57,6 +66,7 @@ export function DayPage() {
 
       <main className="space-y-6 px-4 pt-5 pb-4">
         <WeatherCard day={day} compact />
+        <NextUpCard days={days} visibleDay={day} />
 
         <DayItineraryCard
           day={day}

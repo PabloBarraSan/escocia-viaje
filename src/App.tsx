@@ -7,7 +7,6 @@ import { DayHorariPage } from './pages/DayHorariPage'
 import { MapPage } from './pages/MapPage'
 import { SummaryPage } from './pages/SummaryPage'
 import { ReservationsPage } from './pages/ReservationsPage'
-import { TodayPage } from './pages/TodayPage'
 import { InstallBanner } from './components/InstallBanner'
 import { MorePage } from './pages/MorePage'
 import { ExpensesPage } from './pages/ExpensesPage'
@@ -30,7 +29,7 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route path="/" element={<TodayPage />} />
+          <Route path="/" element={<DayPage auto />} />
           <Route path="/dies" element={<TimelinePage />} />
           <Route path="/dia/:dayNum" element={<DayPage />} />
           <Route path="/dia/:dayNum/horari" element={<DayHorariPage />} />
