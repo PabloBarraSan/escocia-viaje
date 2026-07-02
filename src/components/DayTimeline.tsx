@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ExternalLink, Lightbulb, Pencil, Plus } from 'lucide-react'
+import { Lightbulb, Pencil, Plus } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import {
@@ -180,48 +180,40 @@ export function DayTimeline({ day, activities }: { day: Day; activities: Activit
           >
             {layout.blocks.map(({ activity, top, height }) => {
               const isIdea = activity.kind === 'idea'
+              const compact = height < 72
+              const roomy = height >= 96
+              const spacious = height >= 132
               return (
               <button
                 key={activity.id}
                 type="button"
                 data-activity-block
                 onClick={(e) => { e.stopPropagation(); openEdit(activity) }}
-                className={`absolute right-0 left-2 overflow-hidden rounded-xl border px-3 py-2 text-left shadow-sm transition hover:shadow-md ${activityBlockClass(activity.kind)}`}
+                className={`absolute right-0 left-2 overflow-hidden rounded-xl border text-left shadow-sm transition hover:shadow-md ${compact ? 'px-2 py-1.5' : 'px-3 py-2'} ${activityBlockClass(activity.kind)}`}
                 style={{ top, height, minHeight: 40 }}
               >
-                {isIdea && (
+                {isIdea && !compact && (
                   <span className="mb-0.5 inline-flex items-center gap-0.5 rounded bg-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-900">
                     <Lightbulb size={9} /> Idea
                   </span>
                 )}
-                <p className={`truncate text-xs font-bold ${isIdea ? 'text-emerald-800' : 'text-highland-800'}`}>
+                <p className={`truncate ${compact ? 'text-[11px]' : 'text-xs'} font-bold ${isIdea ? 'text-emerald-800' : 'text-highland-800'}`}>
                   {formatTimeRange(activity) ?? activity.time}
                 </p>
-                <p className="line-clamp-2 text-sm font-semibold leading-tight text-highland-900">{activity.text}</p>
-                {activity.place_name?.trim() && (
+                <p className={`${compact ? 'line-clamp-1 text-xs' : 'line-clamp-2 text-sm'} font-semibold leading-tight text-highland-900`}>{activity.text}</p>
+                {roomy && activity.place_name?.trim() && (
                   <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-highland-700">
                     📍 {activity.place_name}
                   </p>
                 )}
-                {activity.place_address?.trim()
+                {spacious && activity.place_address?.trim()
                   && activity.place_address !== activity.place_name && (
                   <p className="line-clamp-1 text-[10px] text-gray-500">{activity.place_address}</p>
                 )}
-                {activity.maps_url && (
-                  <a
-                    href={activity.maps_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-highland-700 underline-offset-2 hover:underline"
-                  >
-                    <ExternalLink size={10} /> Obrir a Maps
-                  </a>
-                )}
-                {activity.description?.trim() && (
+                {spacious && activity.description?.trim() && (
                   <p className="mt-0.5 line-clamp-1 text-[10px] text-gray-600">{activity.description}</p>
                 )}
-                {activity.duration_minutes && (
+                {roomy && activity.duration_minutes && (
                   <p className={`mt-0.5 text-[10px] ${isIdea ? 'text-emerald-700' : 'text-highland-600'}`}>{formatDuration(activity.duration_minutes)}</p>
                 )}
               </button>
