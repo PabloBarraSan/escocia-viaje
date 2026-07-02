@@ -5,6 +5,17 @@ export type DayWeather = {
   rainProbability: number
   rain: number
   wind: number
+  hourly: HourWeather[]
+}
+
+export type HourWeather = {
+  time: string
+  temperature: number
+  feelsLike: number
+  rainProbability: number
+  rain: number
+  wind: number
+  code: number
 }
 
 export type ForecastByDate = Record<string, DayWeather>
@@ -45,8 +56,32 @@ function parseForecast(data: {
     precipitation_sum?: number[]
     wind_speed_10m_max?: number[]
   }
+  hourly?: {
+    time?: string[]
+    temperature_2m?: number[]
+    apparent_temperature?: number[]
+    precipitation_probability?: number[]
+    precipitation?: number[]
+    weather_code?: number[]
+    wind_speed_10m?: number[]
+  }
 }): ForecastByDate {
   const forecast: ForecastByDate = {}
+  const hourlyByDate = new Map<string, HourWeather[]>()
+  ;(data.hourly?.time ?? []).forEach((dateTime, index) => {
+    const date = dateTime.slice(0, 10)
+    const values = hourlyByDate.get(date) ?? []
+    values.push({
+      time: dateTime.slice(11, 16),
+      temperature: Math.round(data.hourly?.temperature_2m?.[index] ?? 0),
+      feelsLike: Math.round(data.hourly?.apparent_temperature?.[index] ?? 0),
+      rainProbability: Math.round(data.hourly?.precipitation_probability?.[index] ?? 0),
+      rain: Number(data.hourly?.precipitation?.[index] ?? 0),
+      wind: Math.round(data.hourly?.wind_speed_10m?.[index] ?? 0),
+      code: data.hourly?.weather_code?.[index] ?? 0,
+    })
+    hourlyByDate.set(date, values)
+  })
   const times = data.daily?.time ?? []
   times.forEach((date, index) => {
     forecast[date] = {
@@ -56,6 +91,7 @@ function parseForecast(data: {
       rainProbability: Math.round(data.daily!.precipitation_probability_max?.[index] ?? 0),
       rain: Number(data.daily!.precipitation_sum?.[index] ?? 0),
       wind: Math.round(data.daily!.wind_speed_10m_max?.[index] ?? 0),
+      hourly: hourlyByDate.get(date) ?? [],
     }
   })
   return forecast
@@ -63,7 +99,7 @@ function parseForecast(data: {
 
 export async function fetchForecast(lat: number, lng: number): Promise<ForecastByDate> {
   const key = coordKey(lat, lng)
-  const cacheKey = `weather_forecast_${key}`
+  const cacheKey = `weather_forecast_v2_${key}`
 
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) ?? '')
@@ -80,6 +116,7 @@ export async function fetchForecast(lat: number, lng: number): Promise<ForecastB
       latitude: String(lat),
       longitude: String(lng),
       daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max',
+      hourly: 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m',
       timezone: 'Europe/London',
       forecast_days: '16',
     })
