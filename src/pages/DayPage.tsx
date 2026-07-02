@@ -6,6 +6,7 @@ import { useSession } from '../hooks/useSession'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import { WeatherCard } from '../components/WeatherCard'
 import { FlightsCard } from '../components/FlightsCard'
+import { CarRentalCard } from '../components/CarRentalCard'
 import { DayHero } from '../components/DayHero'
 import { DayItineraryCard } from '../components/DayItineraryCard'
 import { CarLocationCard } from '../components/CarLocationCard'
@@ -62,6 +63,7 @@ export function DayPage() {
 
         <WeatherCard day={day} />
         <FlightsCard dayNumber={day.day_number} />
+        <CarRentalCard dayNumber={day.day_number} full />
 
         <PageSection title="Pràctic" hint="Ruta, cotxe i allotjament">
           <div className="space-y-2">
