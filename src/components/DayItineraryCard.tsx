@@ -106,22 +106,25 @@ export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari', highlig
     if (activity.time && new Date(`${day.date}T${activity.time}:00`).getTime() < now.getTime()) return 'done'
     return 'pending'
   }
+  const editAction = editHref ? (
+    <Link
+      to={editHref}
+      className="inline-flex items-center gap-1.5 rounded-xl bg-highland-50 px-3 py-2 text-xs font-semibold text-highland-800 transition hover:bg-highland-100"
+    >
+      <Pencil size={14} /> Editar
+    </Link>
+  ) : undefined
 
   if (activities.length === 0) {
     return (
-      <FeaturedCard eyebrow="Pla del dia" title={eyebrow} badge="Buit">
+      <FeaturedCard eyebrow="Pla del dia" title={eyebrow} action={editAction}>
         <p className="text-sm text-gray-500">Encara no hi ha activitats previstes.</p>
-        {editHref && (
-          <Link to={editHref} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-highland-700 px-4 py-3 text-sm font-semibold text-white">
-            <Pencil size={16} /> Editar horari
-          </Link>
-        )}
       </FeaturedCard>
     )
   }
 
   return (
-    <FeaturedCard eyebrow="Pla del dia" title={eyebrow} badge={`${plans.length} ${plans.length === 1 ? 'activitat' : 'activitats'}`}>
+    <FeaturedCard eyebrow="Pla del dia" title={eyebrow} action={editAction}>
       {plans.length > 0 && (
         <div className="space-y-2">
           {plans.map((activity) => (
@@ -154,11 +157,6 @@ export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari', highlig
         </div>
       )}
 
-      {editHref && (
-        <Link to={editHref} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-highland-200 bg-white py-3 text-sm font-semibold text-highland-800 transition hover:bg-highland-50">
-          <Pencil size={16} /> Editar horari
-        </Link>
-      )}
       {selectedActivity && (
         <PlaceDetailsSheet activity={selectedActivity} day={day} onClose={() => setSelectedActivity(null)} />
       )}

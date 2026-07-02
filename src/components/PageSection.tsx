@@ -24,12 +24,14 @@ export function FeaturedCard({
   eyebrow,
   title,
   badge,
+  action,
   children,
   className = '',
 }: {
   eyebrow: string
   title: string
   badge?: string
+  action?: ReactNode
   children: ReactNode
   className?: string
 }) {
@@ -40,11 +42,11 @@ export function FeaturedCard({
           <p className="text-[11px] font-bold uppercase tracking-wide text-highland-600">{eyebrow}</p>
           <h2 className="font-display text-2xl font-bold text-highland-900">{title}</h2>
         </div>
-        {badge && (
+        {action ?? (badge && (
           <span className="rounded-full bg-highland-50 px-2.5 py-1 text-xs font-semibold text-highland-700">
             {badge}
           </span>
-        )}
+        ))}
       </div>
       {children}
     </section>
