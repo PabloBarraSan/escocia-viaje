@@ -4,6 +4,7 @@ import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { Checklist } from '../components/Checklist'
 import { PendingDecisions } from '../components/PendingDecisions'
+import { FlightsCard } from '../components/FlightsCard'
 
 const INFO_LABELS: Record<string, string> = {
   nits_edimburg: 'Nits a Edimburg',
@@ -92,6 +93,8 @@ export function SummaryPage() {
           </div>
         </div>
       )}
+
+      <FlightsCard />
 
       <div className="space-y-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">

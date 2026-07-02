@@ -6,6 +6,7 @@ import { useTripContext } from '../context/TripContext'
 import { DAY_TYPE_COLORS, DAY_TYPE_LABELS, LODGINGS_BY_DAY } from '../lib/types'
 import type { Day } from '../lib/types'
 import { WeatherCard } from '../components/WeatherCard'
+import { FlightsCard } from '../components/FlightsCard'
 import { dayRoute } from '../lib/maps'
 import { CarLocationCard } from '../components/CarLocationCard'
 import { PhotoHero } from '../components/PhotoHero'
@@ -162,6 +163,7 @@ export function TodayPage() {
         />
 
         <WeatherCard day={day} />
+        <FlightsCard dayNumber={day.day_number} />
 
         <PageSection title="Pràctic" hint="Ruta, cotxe i allotjament">
           <div className="space-y-2">
