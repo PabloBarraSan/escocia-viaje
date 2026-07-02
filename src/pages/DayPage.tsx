@@ -56,12 +56,13 @@ export function DayPage() {
       <DayHero day={day} prev={prev} next={next} />
 
       <main className="space-y-6 px-4 pt-5 pb-4">
+        <WeatherCard day={day} compact />
+
         <DayItineraryCard
           day={day}
           editHref={`/dia/${day.day_number}/horari`}
         />
 
-        <WeatherCard day={day} />
         <FlightsCard dayNumber={day.day_number} />
         <CarRentalCard dayNumber={day.day_number} full />
 

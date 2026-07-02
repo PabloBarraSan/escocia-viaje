@@ -5,18 +5,27 @@ import { weatherAdvice, weatherLabel } from '../lib/weather'
 
 export function WeatherCard({ day, compact = false }: { day: Day; compact?: boolean }) {
   const weather = useWeather(day)
-
   if (!weather) return null
   const condition = weatherLabel(weather.code)
 
   if (compact) {
     return (
-      <div className="animate-fade-in rounded-2xl bg-sky-50 p-4 text-sky-950 shadow-sm">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-bold">{condition.icon} {condition.label}</p>
-          <p className="font-bold">{weather.min}–{weather.max} °C</p>
+      <div
+        className="animate-fade-in flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-3 py-3 text-sky-950 shadow-sm"
+        title={weatherAdvice(weather)}
+        aria-label={`${condition.label}, ${weather.min} a ${weather.max} graus, pluja ${weather.rainProbability} per cent, vent ${weather.wind} quilòmetres per hora. ${weatherAdvice(weather)}`}
+      >
+        <div className="min-w-0 flex flex-1 items-center gap-2">
+          <span className="text-2xl" aria-hidden="true">{condition.icon}</span>
+          <span className="truncate text-sm font-bold">{condition.label}</span>
         </div>
-        <p className="mt-1 text-xs text-sky-800">{weatherAdvice(weather)}</p>
+        <span className="whitespace-nowrap text-sm font-black">{weather.min}–{weather.max}°</span>
+        <span className="flex items-center gap-1 whitespace-nowrap text-xs font-bold text-sky-800">
+          <CloudRain size={15} /> {weather.rainProbability}%
+        </span>
+        <span className="flex items-center gap-1 whitespace-nowrap text-xs font-bold text-sky-800">
+          <Wind size={15} /> {weather.wind}
+        </span>
       </div>
     )
   }
@@ -47,10 +56,8 @@ export function WeatherCard({ day, compact = false }: { day: Day; compact?: bool
 
 export function WeatherBadge({ day }: { day: Day }) {
   const weather = useWeather(day)
-
   if (!weather) return null
   const condition = weatherLabel(weather.code)
-
   return (
     <span className="flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800">
       <span aria-hidden="true">{condition.icon}</span>

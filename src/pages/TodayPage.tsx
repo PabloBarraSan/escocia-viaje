@@ -157,13 +157,14 @@ export function TodayPage() {
           </Link>
         )}
 
+        <WeatherCard day={day} compact />
+
         <DayItineraryCard
           day={day}
           editHref={`/dia/${day.day_number}/horari`}
           eyebrow={isToday ? 'Itinerari d’avui' : 'Pròxim itinerari'}
         />
 
-        <WeatherCard day={day} />
         <FlightsCard dayNumber={day.day_number} />
         <CarRentalCard dayNumber={day.day_number} />
 
