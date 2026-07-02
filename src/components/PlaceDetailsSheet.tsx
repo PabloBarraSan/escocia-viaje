@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
-import { ExternalLink, LocateFixed, MapPinned, Navigation, X } from 'lucide-react'
+import { Clock3, ExternalLink, LocateFixed, MapPinned, Navigation, Star, X } from 'lucide-react'
 import type { Activity, Day } from '../lib/types'
 import { daySearchLocation, fetchPlaceDetails, formatDistanceKm, haversineKm, searchPlaces } from '../lib/googlePlaces'
 
@@ -31,6 +31,7 @@ export function PlaceDetailsSheet({
   onClose: () => void
 }) {
   const [destination, setDestination] = useState<Point | null>(null)
+  const [placeInfo, setPlaceInfo] = useState<Awaited<ReturnType<typeof fetchPlaceDetails>>>(null)
   const [userPosition, setUserPosition] = useState<Point | null>(null)
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState('')
@@ -42,6 +43,7 @@ export function PlaceDetailsSheet({
       if (query) {
         const options = await searchPlaces(query, daySearchLocation(day))
         const details = options[0] ? await fetchPlaceDetails(options[0].placeId) : null
+        if (!cancelled) setPlaceInfo(details)
         if (!cancelled && details?.lat != null && details.lng != null) {
           setDestination({ lat: details.lat, lng: details.lng })
           return
@@ -94,6 +96,29 @@ export function PlaceDetailsSheet({
             </div>
             <button onClick={onClose} className="rounded-full bg-white p-2 text-gray-500" aria-label="Tancar"><X size={20} /></button>
           </div>
+
+          {placeInfo?.photoUrl && (
+            <img src={placeInfo.photoUrl} alt={placeInfo.title} className="mt-4 h-44 w-full rounded-2xl object-cover" />
+          )}
+          {placeInfo && (placeInfo.rating != null || placeInfo.openNow != null) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {placeInfo.rating != null && (
+                <span className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800">
+                  <Star size={13} className="fill-amber-400 text-amber-400" /> {placeInfo.rating.toFixed(1)} ({placeInfo.reviewCount ?? 0})
+                </span>
+              )}
+              {placeInfo.openNow != null && (
+                <span className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold ${placeInfo.openNow ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>
+                  <Clock3 size={13} /> {placeInfo.openNow ? 'Obert ara' : 'Tancat ara'}
+                </span>
+              )}
+            </div>
+          )}
+          {placeInfo?.openingHours.length ? (
+            <p className="mt-2 text-xs text-gray-500">
+              {placeInfo.openingHours[(new Date().getDay() + 6) % 7]}
+            </p>
+          ) : null}
 
           {destination && (
             <div className="mt-4 h-56 overflow-hidden rounded-2xl border border-highland-100">

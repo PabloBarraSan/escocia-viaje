@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Bed, ExternalLink, MapPinned, Navigation, Phone } from 'lucide-react'
+import { Bed, MapPinned, Phone } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
 import { LODGINGS_BY_DAY } from '../lib/types'
@@ -10,7 +10,8 @@ import { DayHero } from '../components/DayHero'
 import { DayItineraryCard } from '../components/DayItineraryCard'
 import { CarLocationCard } from '../components/CarLocationCard'
 import { PageSection } from '../components/PageSection'
-import { dayRoute } from '../lib/maps'
+import { DayMapCard } from '../components/DayMapCard'
+import { DayPlacesCard } from '../components/DayPlacesCard'
 
 function localDateKey() {
   const date = new Date()
@@ -56,43 +57,25 @@ export function DayPage({ auto = false }: { auto?: boolean }) {
   const lodgingDirections = lodgingDetails
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lodgingDetails.address)}&travelmode=driving`
     : null
-  const route = dayRoute(day.day_number)
-
   return (
     <div className="pb-6">
       <DayHero day={day} prev={prev} next={next} />
 
       <main className="space-y-6 px-4 pt-5 pb-4">
         <WeatherCard day={day} compact />
+        <DayMapCard day={day} />
 
         <DayItineraryCard
           day={day}
           editHref={`/dia/${day.day_number}/horari`}
           highlightNext={auto || day.date === today}
         />
+        <DayPlacesCard day={day} />
 
         <CarRentalCard dayNumber={day.day_number} full />
 
         <PageSection title="Pràctic" hint="Ruta, cotxe i allotjament">
           <div className="space-y-2">
-            {route && (
-              <a
-                href={route.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 rounded-2xl border border-highland-100 bg-white p-3.5 shadow-sm transition active:scale-[0.99]"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-highland-100 text-highland-700">
-                  <Navigation size={20} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Ruta del dia</p>
-                  <p className="truncate font-semibold text-highland-900">{route.label}</p>
-                </span>
-                <ExternalLink size={16} className="shrink-0 text-gray-300" />
-              </a>
-            )}
-
             <div className="rounded-2xl border border-highland-100 bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800">

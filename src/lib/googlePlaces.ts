@@ -27,6 +27,10 @@ type PlaceDetails = {
   displayName?: { text?: string }
   formattedAddress?: string
   googleMapsUri?: string
+  rating?: number
+  userRatingCount?: number
+  currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] }
+  photos?: { name?: string }[]
 }
 
 type NearbyPlaceRaw = {
@@ -37,6 +41,7 @@ type NearbyPlaceRaw = {
   rating?: number
   userRatingCount?: number
   location?: { latitude?: number; longitude?: number }
+  currentOpeningHours?: { openNow?: boolean }
 }
 
 type NearbySearchResponse = {
@@ -49,7 +54,7 @@ export type PlaceOption = {
   secondary: string
 }
 
-export type NearbyPlaceKind = 'pub' | 'restaurant' | 'sight'
+export type NearbyPlaceKind = 'pub' | 'restaurant' | 'cafe' | 'sight' | 'supermarket' | 'gas'
 
 export type NearbyPlace = {
   placeId: string
@@ -59,19 +64,31 @@ export type NearbyPlace = {
   rating: number | null
   reviewCount: number | null
   distanceKm: number | null
+  lat: number | null
+  lng: number | null
+  openNow: boolean | null
 }
 
 const NEARBY_TYPES: Record<NearbyPlaceKind, string[]> = {
   pub: ['pub', 'bar'],
   restaurant: ['restaurant', 'meal_takeaway'],
+  cafe: ['cafe', 'coffee_shop'],
   sight: ['tourist_attraction', 'museum', 'park'],
+  supermarket: ['supermarket', 'grocery_store'],
+  gas: ['gas_station'],
 }
 
 const NEARBY_LABELS: Record<NearbyPlaceKind, string> = {
   pub: 'Pubs',
   restaurant: 'Restaurants',
+  cafe: 'Cafè',
   sight: 'Llocs guapos',
+  supermarket: 'Supermercats',
+  gas: 'Gasolineres',
 }
+
+const nearbyCache = new Map<string, { expires: number; places: NearbyPlace[] }>()
+const detailsCache = new Map<string, { expires: number; value: NonNullable<Awaited<ReturnType<typeof fetchPlaceDetails>>> }>()
 
 export function haversineKm(from: LatLng, to: LatLng) {
   const R = 6371
@@ -141,13 +158,26 @@ export async function searchPlaces(
 
 export async function fetchPlaceDetails(
   placeId: string,
-): Promise<{ title: string; address: string; mapsUrl: string; lat: number | null; lng: number | null } | null> {
+): Promise<{
+  title: string
+  address: string
+  mapsUrl: string
+  lat: number | null
+  lng: number | null
+  rating: number | null
+  reviewCount: number | null
+  openNow: boolean | null
+  openingHours: string[]
+  photoUrl: string | null
+} | null> {
   if (!isGooglePlacesConfigured) return null
+  const cached = detailsCache.get(placeId)
+  if (cached && cached.expires > Date.now()) return cached.value
 
   const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
     headers: {
       'X-Goog-Api-Key': API_KEY!,
-      'X-Goog-FieldMask': 'displayName,formattedAddress,googleMapsUri,location',
+      'X-Goog-FieldMask': 'displayName,formattedAddress,googleMapsUri,location,rating,userRatingCount,currentOpeningHours,photos',
     },
   })
 
@@ -162,14 +192,24 @@ export async function fetchPlaceDetails(
 
   const lat = data.location?.latitude
   const lng = data.location?.longitude
+  const photoName = data.photos?.[0]?.name
 
-  return {
+  const value = {
     title,
     address: data.formattedAddress?.trim() ?? '',
     mapsUrl,
     lat: lat ?? null,
     lng: lng ?? null,
+    rating: data.rating ?? null,
+    reviewCount: data.userRatingCount ?? null,
+    openNow: data.currentOpeningHours?.openNow ?? null,
+    openingHours: data.currentOpeningHours?.weekdayDescriptions ?? [],
+    photoUrl: photoName
+      ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=900&key=${encodeURIComponent(API_KEY!)}`
+      : null,
   }
+  detailsCache.set(placeId, { expires: Date.now() + 24 * 60 * 60_000, value })
+  return value
 }
 
 export function daySearchLocation(day: { lat: number | null; lng: number | null; base_city: string }) {
@@ -210,6 +250,9 @@ export async function searchNearbyPlaces(
   signal?: AbortSignal,
 ): Promise<NearbyPlace[]> {
   if (!isGooglePlacesConfigured) return []
+  const cacheKey = `${location.lat.toFixed(3)}:${location.lng.toFixed(3)}:${kind}`
+  const cached = nearbyCache.get(cacheKey)
+  if (cached && cached.expires > Date.now()) return cached.places
 
   const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
     method: 'POST',
@@ -217,7 +260,7 @@ export async function searchNearbyPlaces(
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': API_KEY!,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.googleMapsUri,places.rating,places.userRatingCount,places.location',
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.googleMapsUri,places.rating,places.userRatingCount,places.location,places.currentOpeningHours',
     },
     body: JSON.stringify({
       includedTypes: NEARBY_TYPES[kind],
@@ -235,7 +278,7 @@ export async function searchNearbyPlaces(
   if (!response.ok) return []
 
   const data = (await response.json()) as NearbySearchResponse
-  return (data.places ?? [])
+  const places = (data.places ?? [])
     .map((place) => {
       const placeId = place.id?.replace(/^places\//, '') ?? ''
       const title = place.displayName?.text?.trim()
@@ -257,6 +300,9 @@ export async function searchNearbyPlaces(
         rating: place.rating ?? null,
         reviewCount: place.userRatingCount ?? null,
         distanceKm,
+        lat: lat ?? null,
+        lng: lng ?? null,
+        openNow: place.currentOpeningHours?.openNow ?? null,
       }
     })
     .filter((item): item is NearbyPlace => Boolean(item))
@@ -266,4 +312,6 @@ export async function searchNearbyPlaces(
       if (Math.abs(ratingDiff) > 0.05) return ratingDiff
       return (a.distanceKm ?? 999) - (b.distanceKm ?? 999)
     })
+  nearbyCache.set(cacheKey, { expires: Date.now() + 30 * 60_000, places })
+  return places
 }

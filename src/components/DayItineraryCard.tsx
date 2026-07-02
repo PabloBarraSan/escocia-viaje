@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarCheck, CheckCircle2, Circle, Lightbulb, MapPinned,
-  Pencil, PlayCircle, ThumbsUp,
+  Navigation, Pencil, PlayCircle, ThumbsUp,
 } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
@@ -62,13 +62,19 @@ function ActivityRow({
           )}
         </div>
         {(activity.place_name?.trim() || activity.place_address?.trim()) && (
-          <button
-            type="button"
-            onClick={onOpenPlace}
-            className="mt-1 flex items-center gap-1 text-left text-xs font-semibold text-highland-700"
-          >
-            <MapPinned size={13} /> {activity.place_name || activity.place_address}
-          </button>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <button type="button" onClick={onOpenPlace} className="flex items-center gap-1 text-left text-xs font-semibold text-highland-700">
+              <MapPinned size={13} /> {activity.place_name || activity.place_address}
+            </button>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.place_address || activity.place_name || '')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-[11px] font-bold text-blue-700"
+            >
+              <Navigation size={12} /> Com arribar
+            </a>
+          </div>
         )}
         {isIdea && activity.updated_by && (
           <p className="mt-0.5 text-[10px] text-gray-400">per {activity.updated_by}</p>
