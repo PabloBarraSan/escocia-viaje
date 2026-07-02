@@ -53,7 +53,14 @@ function ActivityRow({
         </span>
       ) : null}
       <div className="min-w-0 flex-1">
-        <p className="text-base leading-snug text-gray-900">{activity.text}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-base leading-snug text-gray-900">{activity.text}</p>
+          {status === 'current' && (
+            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+              Següent
+            </span>
+          )}
+        </div>
         {(activity.place_name?.trim() || activity.place_address?.trim()) && (
           <button
             type="button"
@@ -75,9 +82,10 @@ type Props = {
   day: Day
   editHref?: string
   eyebrow?: string
+  highlightNext?: boolean
 }
 
-export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari' }: Props) {
+export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari', highlightNext = false }: Props) {
   const { voteActivity } = useTripContext()
   const { session } = useSession()
   const activities = day.activities ?? []
@@ -87,14 +95,14 @@ export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari' }: Props
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const nextActivity = plans.find((activity) =>
-    Boolean(activity.time)
-      && day.date === today
+    highlightNext
+      && Boolean(activity.time)
       && new Date(`${day.date}T${activity.time}:00`).getTime() >= now.getTime(),
   )
   const statusFor = (activity: Activity): ActivityStatus => {
     if (day.date < today) return 'done'
-    if (day.date > today) return 'pending'
     if (activity.id === nextActivity?.id) return 'current'
+    if (day.date > today) return 'pending'
     if (activity.time && new Date(`${day.date}T${activity.time}:00`).getTime() < now.getTime()) return 'done'
     return 'pending'
   }

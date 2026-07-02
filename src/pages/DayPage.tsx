@@ -11,7 +11,6 @@ import { DayItineraryCard } from '../components/DayItineraryCard'
 import { CarLocationCard } from '../components/CarLocationCard'
 import { PageSection } from '../components/PageSection'
 import { dayRoute } from '../lib/maps'
-import { NextUpCard } from '../components/NextUpCard'
 
 function localDateKey() {
   const date = new Date()
@@ -65,11 +64,11 @@ export function DayPage({ auto = false }: { auto?: boolean }) {
 
       <main className="space-y-6 px-4 pt-5 pb-4">
         <WeatherCard day={day} compact />
-        <NextUpCard days={days} visibleDay={day} />
 
         <DayItineraryCard
           day={day}
           editHref={`/dia/${day.day_number}/horari`}
+          highlightNext={auto || day.date === today}
         />
 
         <CarRentalCard dayNumber={day.day_number} full />
