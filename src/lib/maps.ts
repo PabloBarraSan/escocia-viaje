@@ -6,116 +6,96 @@ export type DayRoute = {
   travelMode?: 'walking' | 'driving'
 }
 
-const DAY_ROUTES: Record<number, DayRoute> = {
-  1: {
-    origin: 'Edinburgh Airport',
-    destination: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
-    label: 'Arribada a l’allotjament',
-  },
-  2: {
-    origin: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
-    destination: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
-    waypoints: ['Edinburgh Castle', 'Royal Mile Edinburgh', 'Calton Hill Edinburgh'],
-    label: 'Ruta a peu per Edimburg',
-    travelMode: 'walking',
-  },
-  3: {
-    origin: '5 Drummond Street, Old Town, Edinburgh, EH8 9TT, United Kingdom',
-    destination: 'Inverness, Scotland',
-    waypoints: ['The Kelpies, Falkirk', 'Stirling Castle', 'Perth, Scotland'],
-    label: 'Edimburg → Inverness',
-  },
-  4: {
-    origin: 'Inverness, Scotland',
-    destination: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
-    label: 'Inverness → Illa de Skye',
-  },
-  5: {
-    origin: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
-    destination: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
-    waypoints: ['Old Man of Storr', 'Quiraing Isle of Skye', 'Fairy Pools Isle of Skye'],
-    label: 'Volta per Skye',
-  },
-  6: {
-    origin: 'Broadford Youth Hostel, Broadford, IV49 9AA, United Kingdom',
-    destination: '13 Ross Place, Fort William, PH33 6JZ, United Kingdom',
-    label: 'Skye → Fort William',
-  },
-  7: {
-    origin: '13 Ross Place, Fort William, PH33 6JZ, United Kingdom',
-    destination: '149 Cowgate, Old Town, Edinburgh, EH1 1JT, United Kingdom',
-    waypoints: ['Glencoe, Scotland', 'Glasgow, Scotland'],
-    label: 'Fort William → Edimburg',
-  },
-  8: {
-    origin: '149 Cowgate, Old Town, Edinburgh, EH1 1JT, United Kingdom',
-    destination: 'Edinburgh Airport',
-    label: 'Centre → Aeroport',
-  },
+export type RoutePoint = {
+  name: string
+  query: string
+  lat: number
+  lng: number
 }
 
-const ROUTE_POINTS: Record<number, { name: string; lat: number; lng: number }[]> = {
+const DAY_ROUTES: Record<number, DayRoute> = {
+  1: { origin: 'Edinburgh Airport', destination: '5 Drummond Street, Edinburgh', label: 'Aeroport → Edimburg' },
+  2: { origin: '5 Drummond Street, Edinburgh', destination: '5 Drummond Street, Edinburgh', label: 'Ruta a peu per Edimburg', travelMode: 'walking' },
+  3: { origin: '5 Drummond Street, Edinburgh', destination: 'Inverness, Scotland', label: 'Edimburg → Inverness' },
+  4: { origin: 'Inverness, Scotland', destination: 'Broadford Youth Hostel', label: 'Inverness → Illa de Skye' },
+  5: { origin: 'Broadford Youth Hostel', destination: 'Broadford Youth Hostel', label: 'Volta per Skye' },
+  6: { origin: 'Broadford Youth Hostel', destination: '13 Ross Place, Fort William', label: 'Skye → Fort William' },
+  7: { origin: '13 Ross Place, Fort William', destination: '149 Cowgate, Edinburgh', label: 'Fort William → Edimburg' },
+  8: { origin: '149 Cowgate, Edinburgh', destination: 'Edinburgh Airport', label: 'Centre → Aeroport' },
+}
+
+const LOGISTICS_POINTS: Record<number, RoutePoint[]> = {
   1: [
-    { name: 'Aeroport d’Edimburg', lat: 55.9508, lng: -3.3615 },
-    { name: 'Drummond Street', lat: 55.9487, lng: -3.1842 },
+    { name: 'Aeroport d’Edimburg', query: 'Edinburgh Airport', lat: 55.9508, lng: -3.3615 },
+    { name: 'Drummond Street', query: '5 Drummond Street, Edinburgh', lat: 55.9487, lng: -3.1842 },
   ],
   2: [
-    { name: 'Drummond Street', lat: 55.9487, lng: -3.1842 },
-    { name: 'Edinburgh Castle', lat: 55.9486, lng: -3.1999 },
-    { name: 'Royal Mile', lat: 55.9502, lng: -3.1878 },
-    { name: 'Calton Hill', lat: 55.9550, lng: -3.1827 },
+    { name: 'Drummond Street', query: '5 Drummond Street, Edinburgh', lat: 55.9487, lng: -3.1842 },
+    { name: 'Drummond Street', query: '5 Drummond Street, Edinburgh', lat: 55.9487, lng: -3.1842 },
   ],
   3: [
-    { name: 'Edimburg', lat: 55.9533, lng: -3.1883 },
-    { name: 'The Kelpies', lat: 56.0194, lng: -3.7548 },
-    { name: 'Stirling Castle', lat: 56.1239, lng: -3.9483 },
-    { name: 'Perth', lat: 56.3950, lng: -3.4308 },
-    { name: 'Inverness', lat: 57.4778, lng: -4.2247 },
+    { name: 'Edimburg', query: '5 Drummond Street, Edinburgh', lat: 55.9487, lng: -3.1842 },
+    { name: 'Inverness', query: 'Inverness, Scotland', lat: 57.4778, lng: -4.2247 },
   ],
   4: [
-    { name: 'Inverness', lat: 57.4778, lng: -4.2247 },
-    { name: 'Broadford', lat: 57.2419, lng: -5.9117 },
+    { name: 'Inverness', query: 'Inverness, Scotland', lat: 57.4778, lng: -4.2247 },
+    { name: 'Broadford', query: 'Broadford Youth Hostel', lat: 57.2419, lng: -5.9117 },
   ],
   5: [
-    { name: 'Broadford', lat: 57.2419, lng: -5.9117 },
-    { name: 'Old Man of Storr', lat: 57.5069, lng: -6.1833 },
-    { name: 'Quiraing', lat: 57.6436, lng: -6.2650 },
-    { name: 'Fairy Pools', lat: 57.2504, lng: -6.2727 },
+    { name: 'Broadford', query: 'Broadford Youth Hostel', lat: 57.2419, lng: -5.9117 },
+    { name: 'Broadford', query: 'Broadford Youth Hostel', lat: 57.2419, lng: -5.9117 },
   ],
   6: [
-    { name: 'Broadford', lat: 57.2419, lng: -5.9117 },
-    { name: 'Fort William', lat: 56.8198, lng: -5.1052 },
+    { name: 'Broadford', query: 'Broadford Youth Hostel', lat: 57.2419, lng: -5.9117 },
+    { name: 'Fort William', query: '13 Ross Place, Fort William', lat: 56.8198, lng: -5.1052 },
   ],
   7: [
-    { name: 'Fort William', lat: 56.8198, lng: -5.1052 },
-    { name: 'Glencoe', lat: 56.6828, lng: -5.1025 },
-    { name: 'Glasgow', lat: 55.8642, lng: -4.2518 },
-    { name: 'Edimburg', lat: 55.9533, lng: -3.1883 },
+    { name: 'Fort William', query: '13 Ross Place, Fort William', lat: 56.8198, lng: -5.1052 },
+    { name: 'Edimburg', query: '149 Cowgate, Edinburgh', lat: 55.9533, lng: -3.1883 },
   ],
   8: [
-    { name: 'Edimburg', lat: 55.9533, lng: -3.1883 },
-    { name: 'Aeroport d’Edimburg', lat: 55.9508, lng: -3.3615 },
+    { name: 'Edimburg', query: '149 Cowgate, Edinburgh', lat: 55.9533, lng: -3.1883 },
+    { name: 'Aeroport d’Edimburg', query: 'Edinburgh Airport', lat: 55.9508, lng: -3.3615 },
   ],
 }
 
-export function dayRoutePoints(dayNumber: number) {
-  return ROUTE_POINTS[dayNumber] ?? []
+const KNOWN_ACTIVITY_POINTS: { match: RegExp; point: RoutePoint }[] = [
+  { match: /kelpies/i, point: { name: 'The Kelpies', query: 'The Kelpies, Falkirk', lat: 56.0194, lng: -3.7548 } },
+  { match: /stirling/i, point: { name: 'Stirling Castle', query: 'Stirling Castle', lat: 56.1239, lng: -3.9483 } },
+  { match: /\bperth\b/i, point: { name: 'Perth', query: 'Perth, Scotland', lat: 56.3950, lng: -3.4308 } },
+  { match: /glencoe/i, point: { name: 'Glencoe', query: 'Glencoe, Scotland', lat: 56.6828, lng: -5.1025 } },
+  { match: /glasgow/i, point: { name: 'Glasgow', query: 'Glasgow, Scotland', lat: 55.8642, lng: -4.2518 } },
+  { match: /eilean donan/i, point: { name: 'Eilean Donan Castle', query: 'Eilean Donan Castle', lat: 57.2740, lng: -5.5160 } },
+]
+
+export function dayLogisticsPoints(dayNumber: number) {
+  return LOGISTICS_POINTS[dayNumber] ?? []
 }
 
-export function dayRoute(dayNumber: number) {
+export function knownActivityPoint(text: string) {
+  return KNOWN_ACTIVITY_POINTS.find((item) => item.match.test(text))?.point ?? null
+}
+
+export function dayRoute(dayNumber: number, stops?: RoutePoint[]) {
   const route = DAY_ROUTES[dayNumber]
   if (!route) return null
+  const routeStops = stops?.length ? stops : []
+  const origin = routeStops[0]?.query ?? route.origin
+  const destination = routeStops.at(-1)?.query ?? route.destination
+  const waypoints = routeStops.length > 2
+    ? routeStops.slice(1, -1).map((stop) => stop.query)
+    : route.waypoints ?? []
   const params = new URLSearchParams({
     api: '1',
-    destination: route.destination,
+    destination,
     travelmode: route.travelMode ?? 'driving',
   })
-  if (route.origin) params.set('origin', route.origin)
-  if (route.waypoints?.length) params.set('waypoints', route.waypoints.join('|'))
+  if (origin) params.set('origin', origin)
+  if (waypoints.length) params.set('waypoints', waypoints.join('|'))
   return {
     url: `https://www.google.com/maps/dir/?${params}`,
     label: route.label,
     travelMode: route.travelMode ?? 'driving',
-    stops: [route.origin, ...(route.waypoints ?? []), route.destination].filter(Boolean) as string[],
+    stops: [origin, ...waypoints, destination].filter(Boolean) as string[],
   }
 }
