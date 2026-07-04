@@ -71,7 +71,6 @@ BEGIN
   INSERT INTO activities (day_id, time, text, sort_order) VALUES
     (d7, '09:00', 'Eixida de Fort William cap a Edimburg', 1),
     (d7, '11:00', 'Parada: Glencoe', 2),
-    (d7, '14:00', 'Parada: Glasgow', 3),
     (d7, '19:00', 'Sopar a Edimburg i tornar el cotxe', 4);
 
   -- Dia 8

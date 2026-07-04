@@ -147,7 +147,6 @@ export const MAP_STOPS = [
   { name: 'Illa de Skye', lat: 57.4127, lng: -6.1940, day: 4 },
   { name: 'Fort William', lat: 56.8198, lng: -5.1052, day: 6 },
   { name: 'Glencoe', lat: 56.6828, lng: -5.1025, day: 7 },
-  { name: 'Glasgow', lat: 55.8642, lng: -4.2518, day: 7 },
 ]
 
 export const LODGINGS_BY_DAY: Record<number, {

@@ -28,7 +28,6 @@ JOIN (VALUES
   (6, 'Sopar a Crannog Seafood Restaurant', 'Crannog Seafood Restaurant', 'Town Pier, Fort William', 'Marisc al moll, reserva recomanada', 52),
   -- Dia 7 · Tornada cap a Edimburg
   (7, 'Dinar a Clachaig Inn', 'Clachaig Inn', 'Glencoe, Ballachulish', 'Pub mític de Glencoe amb vistes a les muntanyes', 51),
-  (7, 'Visita ràpida al Kelvingrove Museum', 'Kelvingrove Art Gallery and Museum', 'Argyle Street, Glasgow', 'Si tenim una hora a Glasgow, mereix la pena i és de franc', 52),
   -- Dia 8 · Darrer dia
   (8, 'Brunch a Loudons Café', 'Loudons Café', '94b Fountainbridge, Edinburgh', 'Esmorzar de fi de viatge abans de l''aeroport', 51),
   (8, 'Darrer passeig per Stockbridge', 'Stockbridge', 'Stockbridge, Edinburgh', 'Barri tranquil per acabar el viatge sense presses', 52)

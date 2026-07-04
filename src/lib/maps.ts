@@ -64,7 +64,6 @@ const KNOWN_ACTIVITY_POINTS: { match: RegExp; point: RoutePoint }[] = [
   { match: /stirling/i, point: { name: 'Stirling Castle', query: 'Stirling Castle', lat: 56.1239, lng: -3.9483 } },
   { match: /\bperth\b/i, point: { name: 'Perth', query: 'Perth, Scotland', lat: 56.3950, lng: -3.4308 } },
   { match: /glencoe/i, point: { name: 'Glencoe', query: 'Glencoe, Scotland', lat: 56.6828, lng: -5.1025 } },
-  { match: /glasgow/i, point: { name: 'Glasgow', query: 'Glasgow, Scotland', lat: 55.8642, lng: -4.2518 } },
   { match: /eilean donan/i, point: { name: 'Eilean Donan Castle', query: 'Eilean Donan Castle', lat: 57.2740, lng: -5.5160 } },
 ]
 
