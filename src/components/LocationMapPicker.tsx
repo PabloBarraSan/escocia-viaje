@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Crosshair, MapPin } from 'lucide-react'
+import { Check, Crosshair, Link2, LoaderCircle, MapPin } from 'lucide-react'
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 
@@ -38,6 +38,9 @@ export function LocationMapPicker({
   const [open, setOpen] = useState(false)
   const [point, setPoint] = useState<Point>(center)
   const [coordinates, setCoordinates] = useState('')
+  const [mapsLink, setMapsLink] = useState('')
+  const [resolving, setResolving] = useState(false)
+  const [linkError, setLinkError] = useState('')
   const parsed = useMemo(() => parseCoordinates(coordinates), [coordinates])
 
   const useCurrentLocation = () => {
@@ -51,6 +54,24 @@ export function LocationMapPicker({
   const confirm = () => {
     onConfirm(parsed ?? point)
     setOpen(false)
+  }
+
+  const resolveMapsLink = async () => {
+    if (!mapsLink.trim()) return
+    setResolving(true)
+    setLinkError('')
+    try {
+      const response = await fetch(`/api/resolve-maps?url=${encodeURIComponent(mapsLink.trim())}`)
+      const data = await response.json() as { lat?: number; lng?: number; error?: string }
+      if (!response.ok || data.lat == null || data.lng == null) throw new Error(data.error)
+      const next = { lat: data.lat, lng: data.lng }
+      setPoint(next)
+      setCoordinates(`${next.lat.toFixed(6)}, ${next.lng.toFixed(6)}`)
+    } catch (error) {
+      setLinkError(error instanceof Error && error.message ? error.message : 'No hem pogut llegir l’enllaç.')
+    } finally {
+      setResolving(false)
+    }
   }
 
   return (
@@ -83,6 +104,22 @@ export function LocationMapPicker({
             </MapContainer>
           </div>
           <p className="text-[11px] text-gray-500">Toca el mapa o arrossega el marcador.</p>
+          <div className="flex gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Link2 size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={mapsLink}
+                onChange={(event) => setMapsLink(event.target.value)}
+                placeholder="Pega un enllaç de Google Maps"
+                type="url"
+                className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm"
+              />
+            </div>
+            <button type="button" onClick={() => void resolveMapsLink()} disabled={resolving || !mapsLink.trim()} className="rounded-xl bg-gray-100 px-3 text-xs font-bold text-highland-800 disabled:opacity-40">
+              {resolving ? <LoaderCircle size={15} className="animate-spin" /> : 'Llegir'}
+            </button>
+          </div>
+          {linkError && <p className="text-xs text-red-600">{linkError}</p>}
           <input
             value={coordinates}
             onChange={(event) => {
