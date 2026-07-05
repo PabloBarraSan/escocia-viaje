@@ -24,6 +24,12 @@ function parseCoordinates(value: string) {
     .replace(/\+\s*-/g, '-')
     .replace(/[()]/g, ' ')
     .trim()
+  const european = normalized.match(/^\s*([+-]?\d{1,2}),(\d+)\s*,\s*([+-]?\d{1,3}),(\d+)\s*$/)
+  if (european) {
+    const lat = Number(`${european[1]}.${european[2]}`)
+    const lng = Number(`${european[3]}.${european[4]}`)
+    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng }
+  }
   const match = normalized.match(/(?:@|query=)?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*([+-]?\d{1,3}(?:\.\d+)?)/)
   if (!match) return null
   const lat = Number(match[1])
@@ -151,7 +157,7 @@ export function LocationMapPicker({
             <p className={`text-xs font-semibold ${parsed ? 'text-emerald-700' : 'text-red-600'}`}>
               {parsed
                 ? `Coordenades correctes: ${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`
-                : 'No reconec el format. Usa, per exemple: 55.949875, -3.189725'}
+                : 'No reconec el format. Exemples: 55,9498750, -3,1897250 o 55.949875, -3.189725'}
             </p>
           )}
           <div className="flex gap-2">
