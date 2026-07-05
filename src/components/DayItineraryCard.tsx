@@ -13,6 +13,12 @@ import { PlaceDetailsSheet } from './PlaceDetailsSheet'
 
 type ActivityStatus = 'done' | 'current' | 'pending'
 
+function activityDestination(activity: Activity) {
+  const match = activity.maps_url?.match(/[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
+  if (match) return `${match[1]},${match[2]}`
+  return activity.place_address || activity.place_name || ''
+}
+
 function ActivityRow({
   activity,
   onVote,
@@ -70,7 +76,7 @@ function ActivityRow({
               <MapPinned size={13} /> {activity.place_name || activity.place_address}
             </button>
             <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.place_address || activity.place_name || '')}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activityDestination(activity))}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1 text-[11px] font-bold text-blue-700"

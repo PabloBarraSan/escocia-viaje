@@ -7,6 +7,12 @@ import { daySearchLocation, fetchPlaceDetails, formatDistanceKm, haversineKm, se
 
 type Point = { lat: number; lng: number }
 
+function coordinatesFromMapsUrl(url: string | null): Point | null {
+  const match = url?.match(/[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
+  if (!match) return null
+  return { lat: Number(match[1]), lng: Number(match[2]) }
+}
+
 const destinationIcon = L.divIcon({
   className: '',
   html: '<div style="width:28px;height:28px;border-radius:50%;background:#2d5a3d;color:white;border:3px solid white;box-shadow:0 2px 8px #0005;display:flex;align-items:center;justify-content:center">●</div>',
@@ -39,6 +45,12 @@ export function PlaceDetailsSheet({
   useEffect(() => {
     let cancelled = false
     const resolve = async () => {
+      const savedCoordinates = coordinatesFromMapsUrl(activity.maps_url)
+      if (savedCoordinates) {
+        setDestination(savedCoordinates)
+        setPlaceInfo(null)
+        return
+      }
       const query = [activity.place_name, activity.place_address].filter(Boolean).join(', ')
       if (query) {
         const options = await searchPlaces(query, daySearchLocation(day))
@@ -53,16 +65,18 @@ export function PlaceDetailsSheet({
     }
     void resolve()
     return () => { cancelled = true }
-  }, [activity.place_address, activity.place_name, day])
+  }, [activity.maps_url, activity.place_address, activity.place_name, day])
 
   const distance = useMemo(
     () => destination && userPosition ? haversineKm(userPosition, destination) : null,
     [destination, userPosition],
   )
   const walkingMinutes = distance == null ? null : Math.max(1, Math.round((distance / 4.5) * 60))
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-    activity.place_address || activity.place_name || day.base_city,
-  )}`
+  const savedCoordinates = coordinatesFromMapsUrl(activity.maps_url)
+  const directionsDestination = savedCoordinates
+    ? `${savedCoordinates.lat},${savedCoordinates.lng}`
+    : activity.place_address || activity.place_name || day.base_city
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(directionsDestination)}`
 
   const locate = () => {
     setLocationError('')
