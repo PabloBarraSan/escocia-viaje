@@ -84,7 +84,7 @@ function ActivityRow({
             to={locationEditHref}
             className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700"
           >
-            <MapPinned size={12} /> Afegir punt de trobada
+            <MapPinned size={12} /> Afegir ubicació
           </Link>
         )}
         {isIdea && activity.updated_by && (

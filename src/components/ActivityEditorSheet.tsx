@@ -4,8 +4,8 @@ import { DURATION_PRESETS } from '../lib/activities'
 import { lodgingSearchLocation } from '../lib/googlePlaces'
 import type { ActivityKind, Day } from '../lib/types'
 import { LODGINGS_BY_DAY } from '../lib/types'
-import { NearbyPlacesPicker } from './NearbyPlacesPicker'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
+import { LocationMapPicker } from './LocationMapPicker'
 
 export type ActivityDraft = {
   kind: ActivityKind
@@ -97,14 +97,12 @@ function PlaceSection({
   day,
   draft,
   onChange,
-  onPickPlace,
   activityHint,
 }: Props & {
-  onPickPlace: (placeName: string, mapsUrl: string, address: string) => void
   activityHint: string
 }) {
   const hasPlace = Boolean(draft.place_name.trim() || draft.place_address.trim())
-  const isMeetingActivity = /free\s?tour|freetour|tour|visita guiada|punt de trobada/i.test(activityHint)
+  const isMeetingActivity = /free\s?tour|freetour|tour|visita guiada|ubicaci|punt de trobada/i.test(activityHint)
   const [open, setOpen] = useState(hasPlace || isMeetingActivity)
   const lodging = lodgingSearchLocation(day)
   const lodgingInfo = LODGINGS_BY_DAY[day.day_number]
@@ -125,7 +123,7 @@ function PlaceSection({
           <MapPinned size={17} />
         </span>
         <span className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-highland-900">Ubicació / punt de trobada</p>
+          <p className="text-xs font-bold text-highland-900">Ubicació</p>
           {hasPlace ? (
             <p className="truncate text-sm text-highland-800">{draft.place_name}</p>
           ) : (
@@ -144,12 +142,12 @@ function PlaceSection({
             Cerca centrada en <span className="font-semibold text-highland-800">{lodgingName}</span>
           </p>
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Busca el punt de trobada</label>
+            <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Carrer, adreça o nom</label>
             <PlaceAutocomplete
               value={draft.place_name}
               mapsUrl={draft.maps_url}
               location={lodging}
-              placeholder="Ex. Mercat Cross, Royal Mile..."
+              placeholder={`Cerca una adreça a ${day.base_city}...`}
               onChange={(place_name, maps_url, address) => onChange({
                 ...draft,
                 place_name,
@@ -168,7 +166,18 @@ function PlaceSection({
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm"
             />
           </div>
-          <NearbyPlacesPicker day={day} activityText={activityHint} onPick={onPickPlace} />
+          <LocationMapPicker
+            center={lodging}
+            onConfirm={({ lat, lng }) => {
+              const coordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+              onChange({
+                ...draft,
+                place_name: draft.place_name.trim() || 'Ubicació marcada',
+                place_address: draft.place_address.trim() || coordinates,
+                maps_url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+              })
+            }}
+          />
         </div>
       )}
     </div>
@@ -176,15 +185,6 @@ function PlaceSection({
 }
 
 export function ActivityEditorFields({ day, draft, onChange }: Props) {
-  const pickPlace = (placeName: string, mapsUrl: string, address: string) => {
-    onChange({
-      ...draft,
-      place_name: placeName,
-      place_address: address,
-      maps_url: mapsUrl,
-    })
-  }
-
   const activityHint = [draft.text, draft.place_name].filter(Boolean).join(' ')
 
   return (
@@ -231,7 +231,6 @@ export function ActivityEditorFields({ day, draft, onChange }: Props) {
         draft={draft}
         onChange={onChange}
         activityHint={activityHint}
-        onPickPlace={pickPlace}
       />
 
       <div>

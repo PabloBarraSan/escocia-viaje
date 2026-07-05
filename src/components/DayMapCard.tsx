@@ -37,6 +37,15 @@ async function resolveActivityPoint(
 ): Promise<RoutePoint | null> {
   const known = knownActivityPoint(`${activity.text} ${activity.place_name ?? ''}`)
   if (known) return known
+  const coordinateMatch = activity.maps_url?.match(/[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
+  if (coordinateMatch) {
+    return {
+      name: activity.place_name?.trim() || 'Ubicació',
+      query: `${coordinateMatch[1]},${coordinateMatch[2]}`,
+      lat: Number(coordinateMatch[1]),
+      lng: Number(coordinateMatch[2]),
+    }
+  }
   const query = activity.place_address?.trim() || activity.place_name?.trim()
   if (!query) return null
   const options = await searchPlaces(query, daySearchLocation(day))
