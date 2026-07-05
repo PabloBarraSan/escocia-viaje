@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Lightbulb, Pencil, Plus } from 'lucide-react'
 import { useTripContext } from '../context/TripContext'
 import { useSession } from '../hooks/useSession'
@@ -59,6 +60,8 @@ export function DayTimeline({ day, activities }: { day: Day; activities: Activit
   const { session } = useSession()
   const trackRef = useRef<HTMLDivElement>(null)
   const [editor, setEditor] = useState<EditorState>(null)
+  const [searchParams] = useSearchParams()
+  const openedFromUrl = useRef(false)
 
   const sorted = sortActivities(activities)
   const { plans, ideas } = partitionActivities(sorted)
@@ -76,6 +79,15 @@ export function DayTimeline({ day, activities }: { day: Day; activities: Activit
   const openEdit = (activity: Activity) => {
     setEditor({ mode: 'edit', activityId: activity.id, draft: draftFromActivity(activity) })
   }
+
+  useEffect(() => {
+    if (openedFromUrl.current) return
+    const activityId = searchParams.get('activitat')
+    const activity = activities.find((item) => item.id === activityId)
+    if (!activity) return
+    openedFromUrl.current = true
+    setEditor({ mode: 'edit', activityId: activity.id, draft: draftFromActivity(activity) })
+  }, [activities, searchParams])
 
   const closeEditor = () => setEditor(null)
 

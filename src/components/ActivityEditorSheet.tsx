@@ -104,7 +104,8 @@ function PlaceSection({
   activityHint: string
 }) {
   const hasPlace = Boolean(draft.place_name.trim() || draft.place_address.trim())
-  const [open, setOpen] = useState(hasPlace)
+  const isMeetingActivity = /free\s?tour|freetour|tour|visita guiada|punt de trobada/i.test(activityHint)
+  const [open, setOpen] = useState(hasPlace || isMeetingActivity)
   const lodging = lodgingSearchLocation(day)
   const lodgingInfo = LODGINGS_BY_DAY[day.day_number]
   const lodgingName = lodgingInfo?.name ?? day.base_city
@@ -124,7 +125,7 @@ function PlaceSection({
           <MapPinned size={17} />
         </span>
         <span className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-highland-900">Lloc (opcional)</p>
+          <p className="text-xs font-bold text-highland-900">Ubicació / punt de trobada</p>
           {hasPlace ? (
             <p className="truncate text-sm text-highland-800">{draft.place_name}</p>
           ) : (
@@ -143,12 +144,12 @@ function PlaceSection({
             Cerca centrada en <span className="font-semibold text-highland-800">{lodgingName}</span>
           </p>
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Nom del lloc</label>
+            <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Busca el punt de trobada</label>
             <PlaceAutocomplete
               value={draft.place_name}
               mapsUrl={draft.maps_url}
               location={lodging}
-              placeholder="Cerca pub, restaurant, museu..."
+              placeholder="Ex. Mercat Cross, Royal Mile..."
               onChange={(place_name, maps_url, address) => onChange({
                 ...draft,
                 place_name,

@@ -19,14 +19,17 @@ function ActivityRow({
   voted,
   status,
   onOpenPlace,
+  locationEditHref,
 }: {
   activity: Activity
   onVote?: () => void
   voted?: boolean
   status?: ActivityStatus
   onOpenPlace?: () => void
+  locationEditHref?: string
 }) {
   const isIdea = activity.kind === 'idea'
+  const mayNeedPlace = /free\s?tour|tour|visita|castell|museu|parada|sopar|dinar|esmorzar|camin|passeig|punt de trobada/i.test(activity.text)
   return (
     <div className={`flex items-start gap-3 rounded-xl border p-3.5 ${
       isIdea ? 'border-emerald-200 bg-emerald-50/60' : status === 'current'
@@ -75,6 +78,14 @@ function ActivityRow({
               <Navigation size={12} /> Com arribar
             </a>
           </div>
+        )}
+        {!isIdea && mayNeedPlace && !activity.place_name?.trim() && !activity.place_address?.trim() && locationEditHref && (
+          <Link
+            to={locationEditHref}
+            className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700"
+          >
+            <MapPinned size={12} /> Afegir punt de trobada
+          </Link>
         )}
         {isIdea && activity.updated_by && (
           <p className="mt-0.5 text-[10px] text-gray-400">per {activity.updated_by}</p>
@@ -138,6 +149,7 @@ export function DayItineraryCard({ day, editHref, eyebrow = 'Itinerari', highlig
               key={activity.id}
               activity={activity}
               status={statusFor(activity)}
+              locationEditHref={editHref ? `${editHref}?activitat=${activity.id}` : undefined}
               onOpenPlace={activity.place_name || activity.place_address ? () => setSelectedActivity(activity) : undefined}
             />
           ))}
