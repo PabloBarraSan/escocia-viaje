@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Check, Crosshair, Link2, LoaderCircle, MapPin } from 'lucide-react'
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 
 type Point = { lat: number; lng: number }
@@ -20,12 +20,24 @@ function MapClick({ onPick }: { onPick: (point: Point) => void }) {
 }
 
 function parseCoordinates(value: string) {
-  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)$/)
+  const normalized = decodeURIComponent(value)
+    .replace(/\+\s*-/g, '-')
+    .replace(/[()]/g, ' ')
+    .trim()
+  const match = normalized.match(/(?:@|query=)?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*([+-]?\d{1,3}(?:\.\d+)?)/)
   if (!match) return null
   const lat = Number(match[1])
   const lng = Number(match[2])
   if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null
   return { lat, lng }
+}
+
+function Recenter({ point }: { point: Point }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([point.lat, point.lng], Math.max(map.getZoom(), 15))
+  }, [map, point])
+  return null
 }
 
 export function LocationMapPicker({
@@ -51,7 +63,10 @@ export function LocationMapPicker({
     })
   }
 
+  const coordinatesInvalid = coordinates.trim().length > 0 && !parsed
+
   const confirm = () => {
+    if (coordinatesInvalid) return
     onConfirm(parsed ?? point)
     setOpen(false)
   }
@@ -101,6 +116,7 @@ export function LocationMapPicker({
                 setPoint(next)
                 setCoordinates(`${next.lat.toFixed(6)}, ${next.lng.toFixed(6)}`)
               }} />
+              <Recenter point={point} />
             </MapContainer>
           </div>
           <p className="text-[11px] text-gray-500">Toca el mapa o arrossega el marcador.</p>
@@ -129,13 +145,20 @@ export function LocationMapPicker({
             }}
             placeholder="55.953251, -3.188267"
             inputMode="decimal"
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+            className={`w-full rounded-xl border px-3 py-2.5 text-sm ${coordinatesInvalid ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
           />
+          {coordinates.trim() && (
+            <p className={`text-xs font-semibold ${parsed ? 'text-emerald-700' : 'text-red-600'}`}>
+              {parsed
+                ? `Coordenades correctes: ${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`
+                : 'No reconec el format. Usa, per exemple: 55.949875, -3.189725'}
+            </p>
+          )}
           <div className="flex gap-2">
             <button type="button" onClick={useCurrentLocation} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2.5 text-xs font-bold text-blue-800">
               <Crosshair size={14} /> Ubicació actual
             </button>
-            <button type="button" onClick={confirm} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-highland-700 px-3 py-2.5 text-xs font-bold text-white">
+            <button type="button" onClick={confirm} disabled={coordinatesInvalid} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-highland-700 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">
               <Check size={14} /> Usar ubicació
             </button>
           </div>
