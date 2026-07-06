@@ -6,6 +6,7 @@ import type { ActivityKind, Day } from '../lib/types'
 import { LODGINGS_BY_DAY } from '../lib/types'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
 import { LocationMapPicker } from './LocationMapPicker'
+import { NearbyPlacesPicker } from './NearbyPlacesPicker'
 
 export type ActivityDraft = {
   kind: ActivityKind
@@ -178,6 +179,25 @@ function PlaceSection({
               })
             }}
           />
+          <details className="rounded-xl border border-gray-200 bg-white">
+            <summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-highland-800">
+              Explorar llocs propers
+            </summary>
+            <div className="border-t border-gray-100 p-2">
+              <NearbyPlacesPicker
+                day={day}
+                activityText={activityHint}
+                onPick={(placeName, mapsUrl, address) => {
+                  onChange({
+                    ...draft,
+                    place_name: placeName,
+                    place_address: address,
+                    maps_url: mapsUrl,
+                  })
+                }}
+              />
+            </div>
+          </details>
         </div>
       )}
     </div>
