@@ -11,6 +11,7 @@ export type RoutePoint = {
   query: string
   lat: number
   lng: number
+  time?: string | null
 }
 
 const DAY_ROUTES: Record<number, DayRoute> = {
@@ -65,6 +66,19 @@ const KNOWN_ACTIVITY_POINTS: { match: RegExp; point: RoutePoint }[] = [
   { match: /\bperth\b/i, point: { name: 'Perth', query: 'Perth, Scotland', lat: 56.3950, lng: -3.4308 } },
   { match: /glencoe/i, point: { name: 'Glencoe', query: 'Glencoe, Scotland', lat: 56.6828, lng: -5.1025 } },
   { match: /eilean donan/i, point: { name: 'Eilean Donan Castle', query: 'Eilean Donan Castle', lat: 57.2740, lng: -5.5160 } },
+  { match: /broadford/i, point: { name: 'Broadford', query: 'Broadford Youth Hostel', lat: 57.2419, lng: -5.9117 } },
+  { match: /old man of storr|storr/i, point: { name: 'Old Man of Storr', query: 'Old Man of Storr', lat: 57.5073, lng: -6.1831 } },
+  { match: /lealt/i, point: { name: 'Lealt Falls', query: 'Lealt Falls Skye', lat: 57.5684, lng: -6.1568 } },
+  { match: /kilt rock|mealt/i, point: { name: 'Kilt Rock', query: 'Kilt Rock Skye', lat: 57.6109, lng: -6.1723 } },
+  { match: /quiraing/i, point: { name: 'Quiraing', query: 'Quiraing', lat: 57.6433, lng: -6.2653 } },
+  { match: /\buig\b/i, point: { name: 'Uig', query: 'Uig Isle of Skye', lat: 57.5864, lng: -6.3573 } },
+  { match: /fairy glen/i, point: { name: 'Fairy Glen', query: 'Fairy Glen Skye', lat: 57.5836, lng: -6.3351 } },
+  { match: /neist/i, point: { name: 'Neist Point', query: 'Neist Point Lighthouse', lat: 57.4235, lng: -6.7883 } },
+  { match: /elgol/i, point: { name: 'Elgol', query: 'Elgol Harbour', lat: 57.1481, lng: -6.1079 } },
+  { match: /fairy pools/i, point: { name: 'Fairy Pools', query: 'Fairy Pools Skye', lat: 57.2506, lng: -6.2723 } },
+  { match: /carbost/i, point: { name: 'Carbost', query: 'Carbost Isle of Skye', lat: 57.3021, lng: -6.3558 } },
+  { match: /talisker/i, point: { name: 'Talisker Distillery', query: 'Talisker Distillery', lat: 57.3027, lng: -6.3568 } },
+  { match: /fort william/i, point: { name: 'Fort William', query: '13 Ross Place, Fort William', lat: 56.8198, lng: -5.1052 } },
 ]
 
 export function dayLogisticsPoints(dayNumber: number) {

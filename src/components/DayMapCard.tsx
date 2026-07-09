@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, LoaderCircle, Map, Navigation, Route, X } from 'lucide-react'
-import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import type { Day } from '../lib/types'
 import { daySearchLocation, fetchPlaceDetails, searchPlaces } from '../lib/googlePlaces'
@@ -36,7 +36,13 @@ async function resolveActivityPoint(
   day: Day,
 ): Promise<RoutePoint | null> {
   const known = knownActivityPoint(`${activity.text} ${activity.place_name ?? ''}`)
-  if (known) return known
+  if (known) {
+    return {
+      ...known,
+      name: activity.place_name?.trim() || known.name,
+      time: activity.time,
+    }
+  }
   const coordinateMatch = activity.maps_url?.match(/[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
   if (coordinateMatch) {
     return {
@@ -44,6 +50,7 @@ async function resolveActivityPoint(
       query: `${coordinateMatch[1]},${coordinateMatch[2]}`,
       lat: Number(coordinateMatch[1]),
       lng: Number(coordinateMatch[2]),
+      time: activity.time,
     }
   }
   const query = activity.place_address?.trim() || activity.place_name?.trim()
@@ -56,7 +63,16 @@ async function resolveActivityPoint(
     query: activity.place_address?.trim() || details.address || details.title,
     lat: details.lat,
     lng: details.lng,
+    time: activity.time,
   }
+}
+
+function isSkyeRoadbookDay(dayNumber: number) {
+  return dayNumber === 5 || dayNumber === 6
+}
+
+function stopMapsUrl(stop: RoutePoint) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.query)}`
 }
 
 export function DayMapCard({ day }: { day: Day }) {
@@ -87,10 +103,12 @@ export function DayMapCard({ day }: { day: Day }) {
         const end = logistics.at(-1)
         const merged: RoutePoint[] = start ? [start] : []
         for (const point of activityPoints) {
-          if (!point || (end && samePoint(point, end)) || merged.some((item) => samePoint(item, point))) continue
+          if (!point) continue
+          const previous = merged.at(-1)
+          if (previous && samePoint(previous, point)) continue
           merged.push(point)
         }
-        if (end && (merged.length === 0 || !samePoint(merged.at(-1)!, end) || (start && samePoint(start, end) && merged.length > 1))) {
+        if (end && (merged.length === 0 || !samePoint(merged.at(-1)!, end))) {
           merged.push(end)
         }
         setStops(merged)
@@ -104,6 +122,7 @@ export function DayMapCard({ day }: { day: Day }) {
 
   const coords = useMemo<[number, number][]>(() => stops.map((stop) => [stop.lat, stop.lng]), [stops])
   const route = dayRoute(day.day_number, stops)
+  const roadbook = isSkyeRoadbookDay(day.day_number)
 
   useEffect(() => {
     if (open) window.setTimeout(() => mapRef.current?.invalidateSize(), 100)
@@ -118,9 +137,11 @@ export function DayMapCard({ day }: { day: Day }) {
           <Map size={21} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[11px] font-bold uppercase tracking-wide text-emerald-700">Mapa del dia</span>
+          <span className="block text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+            {roadbook ? 'Roadbook visual' : 'Mapa del dia'}
+          </span>
           <span className="block truncate font-bold text-highland-950">
-            {resolved ? `${stops.length} parades` : 'Ruta segons l’itinerari'} · {route.travelMode === 'walking' ? 'A peu' : 'En cotxe'}
+            {resolved ? `${stops.length} parades numerades` : 'Ruta segons l’itinerari'} · {route.travelMode === 'walking' ? 'A peu' : 'En cotxe'}
           </span>
         </span>
         <span className="text-xs font-bold text-highland-700">{open ? 'Tancar' : 'Veure ruta'}</span>
@@ -141,12 +162,27 @@ export function DayMapCard({ day }: { day: Day }) {
               <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <Polyline positions={coords} color="#2d5a3d" weight={4} opacity={0.8} />
               {stops.map((stop, index) => (
-                <Marker key={`${stop.name}-${index}`} position={[stop.lat, stop.lng]} icon={markerIcon(index + 1)} />
+                <Marker key={`${stop.name}-${index}`} position={[stop.lat, stop.lng]} icon={markerIcon(index + 1)}>
+                  <Popup>
+                    <div className="min-w-32">
+                      <p className="font-bold">{index + 1}. {stop.name}</p>
+                      {stop.time && <p className="text-xs">{stop.time}</p>}
+                    </div>
+                  </Popup>
+                </Marker>
               ))}
               <FitRoute points={coords} />
             </MapContainer>
           </div>
           <div className="space-y-2 p-3.5">
+            {roadbook && (
+              <div className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                <p className="font-bold">Ordre revisat</p>
+                <p className="mt-0.5">
+                  Manté el sentit lògic de la ruta i els horaris. Google Maps obrirà la navegació real amb estes parades.
+                </p>
+              </div>
+            )}
             <div className="flex gap-2 overflow-x-auto pb-1">
               {stops.map((stop, index) => (
                 <span key={`${stop.name}-${index}`} className="flex shrink-0 items-center gap-1.5 rounded-full bg-highland-50 px-2.5 py-1.5 text-xs font-semibold text-highland-800">
@@ -155,6 +191,20 @@ export function DayMapCard({ day }: { day: Day }) {
                 </span>
               ))}
             </div>
+            <ol className="space-y-1.5 rounded-xl border border-highland-100 bg-highland-50/70 p-2">
+              {stops.map((stop, index) => (
+                <li key={`${stop.name}-list-${index}`} className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-sm shadow-sm">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-highland-700 text-xs font-black text-white">{index + 1}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-highland-950">{stop.name}</span>
+                    {stop.time && <span className="block text-[11px] font-medium text-gray-500">{stop.time}</span>}
+                  </span>
+                  <a href={stopMapsUrl(stop)} target="_blank" rel="noreferrer" className="shrink-0 rounded-lg bg-highland-100 px-2 py-1 text-[11px] font-bold text-highland-800">
+                    Maps
+                  </a>
+                </li>
+              ))}
+            </ol>
             <a href={route.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-highland-700 px-4 py-3 text-sm font-bold text-white">
               <Navigation size={18} /> Navegar la ruta real <ExternalLink size={14} />
             </a>
